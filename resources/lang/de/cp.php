@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'nav' => 'Aktivität',
+    'permission_view' => 'Aktivitäts-Ledger ansehen',
+    'permission_retention' => 'Aufbewahrung und Anonymisierung ausführen',
+    'title' => 'Aktivitäts-Ledger',
+    'intro' => 'Rohe, unveränderliche Fakten. Bewusst nur lesend — Kennzahlen und Auswertungen liegen woanders.',
+    'filter_event_type' => 'Event-Typ',
+    'filter_contact' => 'Contact-UUID',
+    'filter_user' => 'User-ID',
+    'filter_from' => 'Von',
+    'filter_to' => 'Bis',
+    'filter_submit' => 'Filtern',
+    'filter_reset' => 'Zurücksetzen',
+    'empty' => 'Keine Aktivitäten für diese Filter.',
+    'col_occurred' => 'Zeitpunkt',
+    'col_event_type' => 'Event-Typ',
+    'col_actor' => 'Akteur',
+    'col_source' => 'Quelle',
+    'col_brand' => 'Brand',
+    'detail_title' => 'Aktivität',
+    'detail_properties' => 'Properties',
+    'detail_context' => 'Kontext',
+    'detail_identity' => 'Identität',
+    'detail_subject' => 'Subject',
+    'anonymized' => 'Anonymisiert',
+];

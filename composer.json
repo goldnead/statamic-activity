@@ -1,0 +1,100 @@
+{
+    "name": "goldnead/statamic-activity",
+    "description": "Immutable, brand-scoped activity ledger for Statamic: the append-only source of truth for what happened, without read models or dashboards.",
+    "type": "statamic-addon",
+    "license": "MIT",
+    "keywords": [
+        "statamic",
+        "statamic-addon",
+        "activity",
+        "event-ledger",
+        "audit",
+        "foundation"
+    ],
+    "authors": [
+        {
+            "name": "Adrian Goldner",
+            "email": "info@adriangoldner.com"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/goldnead/statamic-activity/issues",
+        "source": "https://github.com/goldnead/statamic-activity"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/goldnead/statamic-brand-context.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/goldnead/statamic-identity-contracts.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/goldnead/statamic-marketing.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/goldnead/statamic-leadhub.git"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "goldnead/statamic-brand-context": "^1.0",
+        "goldnead/statamic-identity-contracts": "^1.0",
+        "laravel/framework": "^11.0|^12.0|^13.0",
+        "statamic/cms": "^6.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
+        "pestphp/pest": "^2.0|^3.0|^4.0",
+        "pestphp/pest-plugin-laravel": "^2.0|^3.0|^4.0",
+        "goldnead/statamic-marketing": "^1.4",
+        "goldnead/statamic-leadhub": "^1.4"
+    },
+    "suggest": {
+        "goldnead/statamic-marketing": "Enables the bundled marketing producer (subscriptions, campaigns, message events).",
+        "goldnead/statamic-leadhub": "Enables the bundled CRM producer (contact lifecycle, opportunities, tasks)."
+    },
+    "autoload": {
+        "psr-4": {
+            "Goldnead\\Activity\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Goldnead\\Activity\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "statamic": {
+            "name": "Activity",
+            "description": "Immutable, brand-scoped activity ledger."
+        },
+        "laravel": {
+            "providers": [
+                "Goldnead\\Activity\\ServiceProvider"
+            ],
+            "aliases": {
+                "Activity": "Goldnead\\Activity\\Facades\\Activity"
+            }
+        }
+    },
+    "scripts": {
+        "test": [
+            "@php vendor/bin/pest"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "pixelfear/composer-dist-plugin": true,
+            "composer/installers": true,
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

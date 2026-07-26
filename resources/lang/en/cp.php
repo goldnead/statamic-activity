@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'nav' => 'Activity',
+    'permission_view' => 'View the activity ledger',
+    'permission_retention' => 'Run retention and anonymisation',
+    'title' => 'Activity ledger',
+    'intro' => 'Raw, append-only facts. Read-only by design — metrics and reporting live elsewhere.',
+    'filter_event_type' => 'Event type',
+    'filter_contact' => 'Contact uuid',
+    'filter_user' => 'User id',
+    'filter_from' => 'From',
+    'filter_to' => 'To',
+    'filter_submit' => 'Filter',
+    'filter_reset' => 'Reset',
+    'empty' => 'No activities match these filters.',
+    'col_occurred' => 'Occurred',
+    'col_event_type' => 'Event type',
+    'col_actor' => 'Actor',
+    'col_source' => 'Source',
+    'col_brand' => 'Brand',
+    'detail_title' => 'Activity',
+    'detail_properties' => 'Properties',
+    'detail_context' => 'Context',
+    'detail_identity' => 'Identity',
+    'detail_subject' => 'Subject',
+    'anonymized' => 'Anonymised',
+];
