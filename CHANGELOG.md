@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.1 — 2026-07-27
+
+### Fixed — the CP inspector was largely unstyled
+
+- **Statamic 6 ships no utility classes.** Its Control Panel is a Vue component library, and the stylesheet contains only what Statamic's own source uses. An addon's Blade file is never scanned, so `mb-4`, `flex`, `gap-3`, `btn-primary` and `badge-sm` did not exist at runtime: the filter inputs rendered invisible, the buttons as bare text, and the layout without spacing. Verified by counting the classes in the shipped CSS: `.card` and `.data-table` exist (and are kept), `.btn-primary` and `.badge-sm` do not.
+- **A `<style>` tag inside the page content is silently dropped.** Statamic 6 compiles a Blade CP page into a Vue component template (`NonInertiaPage`), and Vue's template compiler strips `<style>`. The rules now live in `@section('scripts')`, which the layout yields *outside* the `#statamic` mount point.
+- Styling derives from the CP's own design tokens (`--color-primary`, `--radius-*`, `--text-*`) and `currentColor`, so it follows the active theme in light and dark without hardcoding a palette.
+
+### Notes
+
+- Found by looking at the page in a browser. The existing tests asserted HTTP 200 and that certain strings appear — both of which were true the whole time. They cannot see styling, and no test was added that pretends otherwise.
+- Suite unchanged: **77 passed (164 assertions)**.
+
 ## 1.0.0 — 2026-07-26
 
 ### Added — the activity ledger

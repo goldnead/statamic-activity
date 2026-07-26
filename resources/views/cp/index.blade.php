@@ -2,44 +2,47 @@
 @section('title', __('activity::cp.title'))
 
 @section('content')
-    <header class="mb-6">
+
+    <header class="activity-inspector__header">
         <h1>{{ __('activity::cp.title') }}</h1>
-        <p class="text-gray-500 text-sm mt-1">{{ __('activity::cp.intro') }}</p>
+        <p class="activity-inspector__intro">{{ __('activity::cp.intro') }}</p>
     </header>
 
-    <div class="card p-4 mb-4">
-        <form method="GET" class="flex flex-wrap items-end gap-3">
-            <div>
-                <label class="text-xs font-medium block mb-1">{{ __('activity::cp.filter_event_type') }}</label>
-                <input type="text" name="event_type" class="input-text" value="{{ $filters['event_type'] ?? '' }}">
+    <div class="card activity-inspector__panel">
+        <form method="GET" class="activity-inspector__filters">
+            <div class="activity-inspector__field">
+                <label class="activity-inspector__label" for="filter-event-type">{{ __('activity::cp.filter_event_type') }}</label>
+                <input id="filter-event-type" type="text" name="event_type" class="activity-inspector__input" value="{{ $filters['event_type'] ?? '' }}">
             </div>
-            <div>
-                <label class="text-xs font-medium block mb-1">{{ __('activity::cp.filter_contact') }}</label>
-                <input type="text" name="contact_uuid" class="input-text" value="{{ $filters['contact_uuid'] ?? '' }}">
+            <div class="activity-inspector__field">
+                <label class="activity-inspector__label" for="filter-contact">{{ __('activity::cp.filter_contact') }}</label>
+                <input id="filter-contact" type="text" name="contact_uuid" class="activity-inspector__input" value="{{ $filters['contact_uuid'] ?? '' }}">
             </div>
-            <div>
-                <label class="text-xs font-medium block mb-1">{{ __('activity::cp.filter_user') }}</label>
-                <input type="text" name="user_id" class="input-text" value="{{ $filters['user_id'] ?? '' }}">
+            <div class="activity-inspector__field">
+                <label class="activity-inspector__label" for="filter-user">{{ __('activity::cp.filter_user') }}</label>
+                <input id="filter-user" type="text" name="user_id" class="activity-inspector__input" value="{{ $filters['user_id'] ?? '' }}">
             </div>
-            <div>
-                <label class="text-xs font-medium block mb-1">{{ __('activity::cp.filter_from') }}</label>
-                <input type="date" name="from" class="input-text" value="{{ $filters['from'] ?? '' }}">
+            <div class="activity-inspector__field">
+                <label class="activity-inspector__label" for="filter-from">{{ __('activity::cp.filter_from') }}</label>
+                <input id="filter-from" type="date" name="from" class="activity-inspector__input" value="{{ $filters['from'] ?? '' }}">
             </div>
-            <div>
-                <label class="text-xs font-medium block mb-1">{{ __('activity::cp.filter_to') }}</label>
-                <input type="date" name="to" class="input-text" value="{{ $filters['to'] ?? '' }}">
+            <div class="activity-inspector__field">
+                <label class="activity-inspector__label" for="filter-to">{{ __('activity::cp.filter_to') }}</label>
+                <input id="filter-to" type="date" name="to" class="activity-inspector__input" value="{{ $filters['to'] ?? '' }}">
             </div>
-            <div class="flex gap-2">
-                <button type="submit" class="btn-primary">{{ __('activity::cp.filter_submit') }}</button>
-                <a href="{{ cp_route('activity.index') }}" class="btn">{{ __('activity::cp.filter_reset') }}</a>
+            <div class="activity-inspector__field">
+                <button type="submit" class="activity-inspector__button activity-inspector__button--primary">{{ __('activity::cp.filter_submit') }}</button>
+            </div>
+            <div class="activity-inspector__field">
+                <a href="{{ cp_route('activity.index') }}" class="activity-inspector__button activity-inspector__button--plain">{{ __('activity::cp.filter_reset') }}</a>
             </div>
         </form>
     </div>
 
     @if ($activities->isEmpty())
-        <div class="card p-6 text-center text-gray-500">{{ __('activity::cp.empty') }}</div>
+        <div class="card activity-inspector__empty">{{ __('activity::cp.empty') }}</div>
     @else
-        <div class="card p-0 overflow-x-auto">
+        <div class="card activity-inspector__scroll">
             <table class="data-table">
                 <thead>
                     <tr>
@@ -59,9 +62,9 @@
                             </td>
                             <td><code>{{ $activity->event_type }}</code></td>
                             <td>
-                                {{ $activity->actor_type }}@if ($activity->actor_id)<span class="text-gray-500"> · {{ $activity->actor_id }}</span>@endif
+                                {{ $activity->actor_type }}@if ($activity->actor_id)<span class="activity-inspector__muted"> · {{ $activity->actor_id }}</span>@endif
                                 @if ($activity->anonymized)
-                                    <span class="badge-sm">{{ __('activity::cp.anonymized') }}</span>
+                                    <span class="activity-inspector__badge">{{ __('activity::cp.anonymized') }}</span>
                                 @endif
                             </td>
                             <td>{{ $activity->source }}</td>
@@ -71,6 +74,14 @@
             </table>
         </div>
 
-        <div class="mt-4">{{ $activities->links() }}</div>
+        <div class="activity-inspector__pagination">{{ $activities->links() }}</div>
     @endif
+@endsection
+
+{{-- Deliberately in 'scripts', not 'content': Statamic 6 compiles the yielded
+     Blade of a CP page into a Vue component template, and Vue's template
+     compiler strips <style> tags. The 'scripts' yield sits outside the
+     #statamic mount point, so the rules survive. --}}
+@section('scripts')
+    @include('activity::cp._styles')
 @endsection
