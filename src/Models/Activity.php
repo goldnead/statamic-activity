@@ -38,11 +38,26 @@ class Activity extends Model
     ];
 
     /**
-     * Lifted only by the retention and anonymisation paths. A static flag rather
-     * than a per-instance one, because the guard must also cover mass updates
-     * issued through the query builder.
+     * Lifted only by the retention and anonymisation paths. Static rather than
+     * per-instance because the guard also covers mass updates and deletes
+     * issued through the query builder (see ImmutableBuilder).
      */
     protected static bool $mutable = false;
+
+    public static function isMutable(): bool
+    {
+        return static::$mutable;
+    }
+
+    /**
+     * Routes every query for this model through the guarded builder. Without
+     * this, `Activity::query()->update()` and `->delete()` bypass the model
+     * events entirely and rewrite the ledger unchallenged.
+     */
+    public function newEloquentBuilder($query): ImmutableBuilder
+    {
+        return new ImmutableBuilder($query);
+    }
 
     protected static function booted(): void
     {

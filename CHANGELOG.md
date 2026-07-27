@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.2 — 2026-07-27
+
+### Fixed — append-only did not cover the query builder
+
+- **`Activity::query()->update()` and `->delete()` rewrote the ledger unchallenged.** Model events only fire for instance operations, so `$activity->save()` was blocked while the bulk path went straight through. The guard covered the polite route and missed the fast one — and the model's own docblock claimed otherwise. A ledger that can be rewritten in bulk is not a ledger.
+- Every query for the model now runs through `ImmutableBuilder`, which refuses `update`, `delete` and `forceDelete` unless `Activity::mutable()` has lifted the guard. Retention and anonymisation are unaffected; they already ran inside that helper.
+- Found in the local QA run by an agent that deliberately attacked the guarantee from four directions instead of trusting it. The existing tests only ever exercised the instance path.
+
+### Notes
+
+- Suite: **81 passed (169 assertions)**, four new tests covering bulk update, bulk delete, bulk update without global scopes, and the legitimate retention path.
+
 ## 1.0.1 — 2026-07-27
 
 ### Fixed — the CP inspector was largely unstyled

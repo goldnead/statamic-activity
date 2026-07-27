@@ -44,3 +44,34 @@ it('restores the guard even when the retention path throws', function (): void {
 
     expect(fn () => $activity->delete())->toThrow(ImmutableActivity::class);
 });
+
+it('refuses a mass update through the query builder', function (): void {
+    // Regression: model events only fire for instance operations, so this path
+    // rewrote the ledger unchallenged while $activity->save() was blocked. The
+    // guard covered the polite path and missed the fast one.
+    Activity::record('commerce.purchase_completed');
+
+    ActivityModel::query()->update(['event_type' => 'tampered']);
+})->throws(ImmutableActivity::class);
+
+it('refuses a mass delete through the query builder', function (): void {
+    Activity::record('commerce.purchase_completed');
+
+    ActivityModel::query()->delete();
+})->throws(ImmutableActivity::class);
+
+it('refuses a mass update even without the global scopes', function (): void {
+    Activity::record('commerce.purchase_completed');
+
+    ActivityModel::withoutGlobalScopes()->update(['event_type' => 'tampered']);
+})->throws(ImmutableActivity::class);
+
+it('still lets retention and anonymisation through', function (): void {
+    Activity::record('commerce.purchase_completed');
+
+    ActivityModel::mutable(fn () => ActivityModel::query()->update(['anonymized' => true]));
+    expect(ActivityModel::first()->anonymized)->toBeTrue();
+
+    ActivityModel::mutable(fn () => ActivityModel::query()->delete());
+    expect(ActivityModel::count())->toBe(0);
+});
