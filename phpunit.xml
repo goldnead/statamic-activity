@@ -12,6 +12,18 @@
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
         </testsuite>
+        <!--
+            The migration path itself, against tables that already hold rows.
+            Every other suite meets a database RefreshDatabase has migrated to
+            head; these install an earlier release, put data in and migrate
+            forward. Present in both configurations on purpose — the column
+            widths this addon narrows are advisory on SQLite and enforced by
+            the engine on MySQL, and only the second run can tell you that the
+            values already in the ledger survived.
+        -->
+        <testsuite name="Migrations">
+            <directory>tests/Migrations</directory>
+        </testsuite>
         <testsuite name="Integration">
             <directory>tests/Integration</directory>
         </testsuite>

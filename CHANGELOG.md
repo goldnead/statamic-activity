@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.0.6 — 2026-07-28
+
+### Added — the migrations are finally tested against a database with data in it
+
+No defect in this addon and nothing in `src/` was touched. What changed is that this addon's migration coverage was measuring something other than what it claimed to.
+
+A sweep across all eight addons in this family, prompted by `statamic-marketing` 1.6.4, looked for a check that runs a migration against tables that already hold rows. It found none, anywhere. Every migration in every addon had only ever met tables the test created moments earlier — which is the one shape a migration can never be wrong about. `statamic-marketing` shipped three releases with its consent unique silently dropped through exactly that blind spot, and `statamic-notifications` shipped three with a migration that deleted rows nobody had agreed to lose.
+
+`tests/Feature/UpgradeMigrationTest.php` came closest here: it rebuilds the 1.0.2 shape and puts a handful of rows in. But it rebuilds that shape from a copy of the old DDL kept inside the test, calls one named migration file directly, and knows in advance which two files exist. All three go stale the moment a third migration is added, which is the property that matters — the migration that hurts is never the one somebody wrote a test for.
+
+`tests/Migrations/` names no migration. It walks `database/migrations/`, seeds a fresh generation of ledger rows into **every table that already exists before each file runs**, and applies them one at a time. A migration added years from now is covered the day it lands, against rows written under every schema that preceded it. `tests/Fixtures/released-migrations/` holds the migration sets as published in 1.0.2 — the install still carrying `varchar(255)` subjects and the wide, brand-less `act_subject_idx` — and in 1.0.5, and the suite installs each, fills it and upgrades forward.
+
+The suite is in both `phpunit.xml` and `phpunit.mysql.xml`: the column widths this addon narrows are advisory on SQLite and enforced by the engine on MySQL, and only the second run can say that the values already in the ledger survived.
+
+Every check is behavioural. "The migration ran" and "the constraint is there" are not the same statement, and neither is "an index named `act_brand_dedupe_unique` exists" the same as "this ledger cannot record the same fact twice". So nothing here asserts an exit code or an index name. It writes the row the constraint is supposed to refuse and requires the database to refuse it — including the counterpart nobody thinks to write, that the same dedupe key in a *different* brand is still accepted, which is what separates a brand-scoped unique from one quietly rebuilt over the key alone.
+
+The case worth naming: `it refuses to run rather than shorten a subject the ledger already holds` installs 1.0.2, records a 200-character `subject_type` that schema permits, and requires the narrowing migration to stop with the offending id named — and then requires the row to still be there, still 200 characters, with the table still accepting wide values. The ledger is append-only. A migration that resolves a width problem by trimming what is already recorded has not resolved it.
+
+### Notes — one thing that was reviewed and deliberately left alone
+
+`2026_07_28_000001_narrow_activity_subject_index` drops `act_subject_idx` before it builds `act_brand_subject_idx`, so there is a window in which neither is on the table. Building the new one first was considered and rejected: it is a plain index rather than a unique, so only query speed is affected and no guarantee is ever open; the migration is already guarded on `Schema::hasIndex()` and heals itself on a retry; and creating the index before the columns narrow would make MySQL build a 2048-byte index it immediately rebuilds when they do — two full index builds on an append-only ledger, to close a window that costs nothing while it is open.
+
+- Suite: **102 passed (309 assertions)** on SQLite, baseline 98. Green against MySQL 8.0 as well, through `phpunit.mysql.xml`, including the new `Migrations` suite.
+
 ## 1.0.5 — 2026-07-28
 
 ### Changed — the route parameter guard checks the rule, not a snapshot of the siblings
