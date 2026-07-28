@@ -171,6 +171,18 @@ Permissions: `view activity`, and `manage activity retention` beneath it.
 
 Unique: `(brand_id, dedupe_key)`, `event_id`.
 
+`subject_type` is capped at 191 characters (it holds a class name) and
+`subject_id` at 128 (a database identifier — an integer, a UUID, a Statamic ID).
+Both go into `act_brand_subject_idx`, and under `utf8mb4` every character costs
+four bytes of InnoDB's 3072 per index. Nothing is truncated to fit: the upgrade
+migration refuses to run if a stored value exceeds either cap.
+
+`(brand_id, dedupe_key)` is deliberately not binding for rows without a dedupe
+key — those are facts nobody asked to be deduplicated, and `event_id` holds
+them instead. A producer that cannot build a key must therefore write `null`,
+never an empty-but-present one: that would be constrained, and every event of
+its type in the brand would collapse onto one row.
+
 ## Tests
 
 ```bash

@@ -58,11 +58,7 @@ abstract class TestCase extends Orchestra
     protected function defineEnvironment($app): void
     {
         $app['config']->set('database.default', 'testing');
-        $app['config']->set('database.connections.testing', [
-            'driver' => 'sqlite',
-            'database' => ':memory:',
-            'prefix' => '',
-        ]);
+        $app['config']->set('database.connections.testing', $this->testingConnection());
 
         $app['config']->set('app.key', 'base64:'.base64_encode(random_bytes(32)));
         // File-backed users: the ledger has no opinion on where users live, and
@@ -72,6 +68,40 @@ abstract class TestCase extends Orchestra
         $app['config']->set('activity.enabled', true);
         $app['config']->set('activity.source', 'test-suite');
         $app['config']->set('queue.default', 'sync');
+    }
+
+    /**
+     * In-memory SQLite by default, so the suite keeps running anywhere with no
+     * setup. Set `DB_DRIVER=mysql` to point the identical suite at a real MySQL
+     * server instead — see phpunit.mysql.xml.
+     *
+     * SQLite is not a substitute for that run. It has no InnoDB key-length
+     * limit, no utf8mb4 byte arithmetic and no fixed column widths, which is
+     * precisely why a fully green suite let an unbuildable index reach
+     * production in statamic-notifications v1.0.3.
+     */
+    protected function testingConnection(): array
+    {
+        if (env('DB_DRIVER', 'sqlite') !== 'mysql') {
+            return [
+                'driver' => 'sqlite',
+                'database' => ':memory:',
+                'prefix' => '',
+            ];
+        }
+
+        return [
+            'driver' => 'mysql',
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '3306'),
+            'database' => env('DB_DATABASE', 'activity_test'),
+            'username' => env('DB_USERNAME', 'root'),
+            'password' => env('DB_PASSWORD', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+        ];
     }
 
     protected function defineRoutes($router): void

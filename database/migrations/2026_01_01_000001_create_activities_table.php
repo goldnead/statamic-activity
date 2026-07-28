@@ -30,8 +30,16 @@ return new class extends Migration
             $table->string('session_id')->nullable();
 
             $table->string('source')->nullable();
-            $table->string('subject_type')->nullable();
-            $table->string('subject_id')->nullable();
+
+            // Narrower than the default 255 on purpose. Both go into an index,
+            // and under utf8mb4 a varchar(255) costs 1020 bytes of InnoDB's
+            // 3072 — two of them made `act_subject_idx` the widest key in this
+            // addon by a wide margin. Neither column needs the room: subject_type
+            // holds a class name this addon writes itself, subject_id a database
+            // identifier (an integer, a UUID, a Statamic ID). See
+            // tests/Unit/IndexKeyLengthTest.php.
+            $table->string('subject_type', 191)->nullable();
+            $table->string('subject_id', 128)->nullable();
 
             $table->string('dedupe_key')->nullable();
 
@@ -52,7 +60,10 @@ return new class extends Migration
             $table->index(['brand_id', 'contact_uuid'], 'act_brand_contact_idx');
             $table->index(['brand_id', 'user_id'], 'act_brand_user_idx');
             $table->index(['brand_id', 'anonymous_id'], 'act_brand_anon_idx');
-            $table->index(['subject_type', 'subject_id'], 'act_subject_idx');
+            // Brand-led like every other index here: each read runs under the
+            // brand scope, so an index starting at subject_type could not serve
+            // one. 1284 bytes.
+            $table->index(['brand_id', 'subject_type', 'subject_id'], 'act_brand_subject_idx');
         });
     }
 

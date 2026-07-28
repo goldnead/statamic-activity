@@ -72,7 +72,7 @@ class MarketingProducer
         return [
             'actor' => static::contactIdentity($payload),
             'subject' => $event->subscription,
-            'dedupe_key' => $eventType.':'.($payload['subscription_uuid'] ?? ''),
+            'dedupe_key' => static::dedupeKey($eventType, $payload['subscription_uuid'] ?? null),
             'properties' => [
                 'list' => $payload['list'] ?? null,
                 'status' => $payload['status'] ?? null,
@@ -88,7 +88,7 @@ class MarketingProducer
         return [
             // A campaign transition is an operator action, not a contact's.
             'actor' => Identity::system(),
-            'dedupe_key' => $eventType.':'.($payload['campaign'] ?? ''),
+            'dedupe_key' => static::dedupeKey($eventType, $payload['campaign'] ?? null),
             'properties' => [
                 'campaign' => $payload['campaign'] ?? null,
                 'name' => $payload['name'] ?? null,
@@ -105,7 +105,7 @@ class MarketingProducer
         return [
             'actor' => static::contactIdentity($payload),
             'subject' => $event->message,
-            'dedupe_key' => $deduped ? $eventType.':'.($payload['message_uuid'] ?? '') : null,
+            'dedupe_key' => $deduped ? static::dedupeKey($eventType, $payload['message_uuid'] ?? null) : null,
             'properties' => array_filter([
                 'campaign' => $payload['campaign'] ?? null,
                 'message_uuid' => $payload['message_uuid'] ?? null,
@@ -113,6 +113,30 @@ class MarketingProducer
                 'hard' => $payload['hard'] ?? null,
             ], fn ($value) => $value !== null),
         ];
+    }
+
+    /**
+     * A dedupe key needs the thing it deduplicates on. Where that identifier is
+     * absent there is no key — not an empty one.
+     *
+     * The distinction is not cosmetic. `$eventType.':'.($uuid ?? '')` produces a
+     * value that is perfectly non-NULL, so `act_brand_dedupe_unique` binds it,
+     * and every event of that type in the brand collapses onto the first row
+     * ever written: the second subscription confirmation is silently returned as
+     * a duplicate of the first, and the ledger loses facts it was built to keep.
+     * Returning NULL is what makes the unique stand aside, which is exactly what
+     * it should do for a row that carries nothing to be unique about — the row is
+     * then held by `event_id` alone, like every other repeatable event here.
+     *
+     * These payloads merge `$event->metadata` last and can therefore override or
+     * blank any of the identifiers, so the absence is reachable through the
+     * marketing addon's public event API, not only through a future producer.
+     */
+    protected static function dedupeKey(string $eventType, mixed $identifier): ?string
+    {
+        $identifier = is_scalar($identifier) ? trim((string) $identifier) : '';
+
+        return $identifier === '' ? null : $eventType.':'.$identifier;
     }
 
     /**

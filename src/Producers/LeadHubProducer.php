@@ -99,11 +99,12 @@ class LeadHubProducer
     protected static function dedupeKey(object $event, string $eventType, ?string $uuid): ?string
     {
         $metadata = (array) ($event->metadata ?? []);
+        $key = $metadata['dedupe_key'] ?? null;
+        $key = is_scalar($key) ? trim((string) $key) : '';
 
-        if (isset($metadata['dedupe_key'])) {
-            return $eventType.':'.$metadata['dedupe_key'];
-        }
-
-        return null;
+        // An empty key is no key. Prefixing the event type onto it would produce
+        // a non-NULL value that `act_brand_dedupe_unique` binds, collapsing every
+        // such event in the brand onto the first row ever written.
+        return $key === '' ? null : $eventType.':'.$key;
     }
 }

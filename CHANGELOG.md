@@ -1,5 +1,51 @@
 # Changelog
 
+## 1.0.3 — 2026-07-28
+
+### Added — the suite can finally see MySQL's index rules
+
+**Why a green suite proves nothing about the schema.** The suite runs on in-memory SQLite. SQLite has no InnoDB key-length limit, no per-character byte cost, and no fixed column widths — it accepts `varchar(255)` and ignores the 255. Every mechanism that rejects an oversized index is a MySQL mechanism, so a migration MySQL refuses outright passes this suite without a murmur. `statamic-notifications` v1.0.3 shipped exactly that way: a 3212-byte unique that had run hundreds of times locally and died on the production hub with *SQLSTATE 1071*, leaving two tables that never existed there at all.
+
+Demonstrated rather than asserted: put back the 1.0.2 migration and **89 of the 93 tests stay green**. Only the new one fails.
+
+`tests/Unit/IndexKeyLengthTest.php` closes the gap without needing a server. It compiles this addon's own migration files through Laravel's MySQL grammar in pretend mode and measures the DDL MySQL would have received. It asserts four things: no index over InnoDB's 3072 bytes; no index over **half** of it, because an index under the limit by accident breaks on the next column added to it; no unique covering a nullable column unless the file names it and a test proves the intent; and no composite index that fails to lead with `brand_id`, since every read here runs under the brand scope.
+
+`phpunit.mysql.xml` runs the identical suite against a real MySQL server (`vendor/bin/pest -c phpunit.mysql.xml`, `DB_DRIVER=mysql`).
+
+### Fixed — `act_subject_idx` was two thirds of the way to the wall
+
+`(subject_type, subject_id)`, two `varchar(255)` columns, is **2040 bytes** under utf8mb4 — the widest index in this addon by a factor of two, and the only composite one that did not begin with `brand_id`. MySQL would have built it. That is the problem: it was under the limit by luck, not by design, and the next column added to it would have taken it past 3072 in a migration nobody would think to measure. Being one field away from an unbuildable index is a defect with a delay on it.
+
+It is now `act_brand_subject_idx` on `(brand_id, subject_type, subject_id)` at **1284 bytes**, with the two columns narrowed to what they actually hold: `subject_type` to 191 (a class name this addon writes itself, via `$subject::class`) and `subject_id` to 128 (a database identifier — an integer, a UUID, a Statamic ID). Neither cap was chosen to make an index fit a prefix: nothing is truncated, and the upgrade migration refuses to run rather than shorten a value the ledger already holds. The ledger is append-only; that has to include migrations.
+
+Leading with `brand_id` also makes the index usable for the first time. Every query against this table carries the brand scope, so an index starting at `subject_type` could not serve one.
+
+The widest index is now 1284 bytes, 41% of the limit. The next is `act_brand_type_time_idx` at 1036 and `act_brand_user_idx` at 1028.
+
+### Fixed — the dedupe key turned a missing identifier into a constant
+
+The quieter half of the review, and the one no width measurement finds. `(brand_id, dedupe_key)` is deliberately NULL-permissive: a row without a dedupe key is a fact nobody asked to be deduplicated, and `event_id` holds it instead. That only works while "no identifier" actually produces NULL.
+
+The marketing producer built its keys as `$eventType.':'.($payload['subscription_uuid'] ?? '')`. Where the identifier was absent that yields `marketing.subscription_confirmed:` — non-NULL, so the unique **does** bind it, and every subscription confirmation in the brand collapses onto the first row ever written. The second is silently returned as a duplicate of the first and the ledger loses the fact it exists to keep. Same construction for campaign transitions and for the three deduplicated message events; the LeadHub producer had the same hole for an empty-string key.
+
+Reachable through the sibling addons' public API, not only in theory: their event payloads merge `$event->metadata` last, so a caller can blank any identifier in them.
+
+Both producers now return `null` when there is nothing to deduplicate on. Deduplication with an identifier present is unchanged, which is asserted rather than assumed.
+
+This is the notifications defect seen from the other side. There a unique enforced nothing where it should have; here it enforced everything where it should have stood aside. Both come from never deciding what the absent value means.
+
+### Migration
+
+- **New installs** need nothing: the corrected create-migration builds the right index straight away.
+- **Existing installs** run `2026_07_28_000001_narrow_activity_subject_index`. It swaps the index, narrows the two columns, is idempotent, and is a no-op on a fresh install. It writes no row: the ledger is not edited, only reindexed.
+- If any stored `subject_type` exceeds 191 or `subject_id` exceeds 128 characters, the migration **stops with the offending ids** instead of shortening them. On MySQL in strict mode the shrink would fail anyway; on SQLite it would appear to succeed while the two engines drifted apart, which is the exact failure this release exists to close.
+- Brand-scoped uniqueness of dedupe keys is untouched, and proven so on both sides of the migration: same key and same brand still refused, same key in another brand still allowed.
+
+### Notes
+
+- No new dependency. The measurement uses Laravel's own schema grammar.
+- Suite: **93 passed (272 assertions)**, baseline 81.
+
 ## 1.0.2 — 2026-07-27
 
 ### Fixed — append-only did not cover the query builder
