@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    background: radial-gradient(1200px 700px at 78% 22%, #1A2E05 0%, #14210A 55%, #0A1108 100%);
+    color: #fff; overflow: hidden; position: relative;
+  }
+  .wrap { display: flex; height: 100%; align-items: center; padding: 0 92px; gap: 64px; }
+  .copy { max-width: 660px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 22px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+    color: #D9F99D; margin-bottom: 26px;
+  }
+  .eyebrow .dot { width: 12px; height: 12px; border-radius: 50%; background: #A3E635; box-shadow: 0 0 18px #A3E635; }
+  h1 { font-size: 78px; line-height: 1.02; font-weight: 800; letter-spacing: -.02em; }
+  h1 .accent { background: linear-gradient(90deg,#BEF264,#86EFAC); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  p.sub { margin-top: 28px; font-size: 30px; line-height: 1.35; color: #CBD5E1; font-weight: 400; }
+  .badges { margin-top: 40px; display: flex; gap: 14px; }
+  .badge { font-size: 22px; font-weight: 600; padding: 12px 22px; border-radius: 999px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); color: #ECFCCB; white-space: nowrap; }
+  .art { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .glyph { width: 360px; height: 360px; filter: drop-shadow(0 30px 60px rgba(0,0,0,.45)); }
+  .corner { position: absolute; right: -120px; bottom: -160px; width: 520px; height: 520px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(132,204,22,.28), transparent 60%); }
+</style>
+</head>
+<body>
+  <div class="corner"></div>
+  <div class="wrap">
+    <div class="copy">
+      <span class="eyebrow"><span class="dot"></span>Statamic Addon</span>
+      <h1>Statamic<br><span class="accent">Activity</span></h1>
+      <p class="sub">An immutable, brand-scoped ledger of what happened &mdash; append-only facts that every addon in the stack can read.</p>
+      <div class="badges">
+        <span class="badge">Append-only</span>
+        <span class="badge">Brand-scoped</span>
+        <span class="badge">Immutable</span>
+      </div>
+    </div>
+    <div class="art">
+      <svg class="glyph" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#84CC16"/><stop offset="1" stop-color="#16A34A"/>
+          </linearGradient>
+          <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#14210A" flood-opacity="0.32"/>
+          </filter>
+        </defs>
+        <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+        <!-- the fact being appended -->
+        <g stroke="#FFFFFF" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none">
+          <path d="M256 68 V 118"/>
+          <path d="M224 96 L256 128 L288 96"/>
+        </g>
+        <!-- the ledger -->
+        <g filter="url(#sh)">
+          <rect x="112" y="160" width="288" height="240" rx="34" fill="#FFFFFF"/>
+        </g>
+        <g fill="url(#bg)">
+          <circle cx="164" cy="212" r="14"/>
+          <rect x="192" y="203" width="166" height="18" rx="9"/>
+        </g>
+        <g fill="url(#bg)" opacity="0.65">
+          <circle cx="164" cy="280" r="14"/>
+          <rect x="192" y="271" width="138" height="18" rx="9"/>
+        </g>
+        <g fill="url(#bg)" opacity="0.4">
+          <circle cx="164" cy="348" r="14"/>
+          <rect x="192" y="339" width="110" height="18" rx="9"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>
