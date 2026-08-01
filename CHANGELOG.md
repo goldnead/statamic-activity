@@ -47,7 +47,7 @@ A ledger whose stated purpose is to be read by other addons gave downstream cons
 
 ### Notes
 
-- Suite: **132 passed (387 assertions)**, baseline 102. The test bed now clears the file user repository between tests — it writes into the testbench app inside `vendor/`, where two saved users survived the test and made the third CP request in a run die on "Statamic Pro is required for multiple users".
+- Suite: **133 passed (391 assertions)**, baseline 102. The test bed now clears the file user repository between tests — it writes into the testbench app inside `vendor/`, where two saved users survived the test and made the third CP request in a run die on "Statamic Pro is required for multiple users".
 - The dead `col_brand` translation key was removed rather than turned into a column. The brand scope restricts the listing to the current brand, so a brand column would print the same value on every row.
 
 ## 1.0.6 — 2026-07-28
