@@ -4,6 +4,7 @@ namespace Goldnead\Activity;
 
 use Closure;
 use Goldnead\Activity\Contracts\ActivitySanitizer;
+use Goldnead\Activity\Events\ActivityRecorded;
 use Goldnead\Activity\Jobs\RecordActivityJob;
 use Goldnead\Activity\Models\Activity;
 use Goldnead\Activity\Producers\ProducerRegistry;
@@ -142,7 +143,8 @@ class ActivityRecorder
         }
 
         try {
-            return Activity::create($attributes);
+            /** @var Activity $activity */
+            $activity = Activity::create($attributes);
         } catch (UniqueConstraintViolationException) {
             return $this->findDuplicate($attributes);
         } catch (QueryException $e) {
@@ -152,6 +154,12 @@ class ActivityRecorder
 
             return $this->findDuplicate($attributes);
         }
+
+        // Only a genuinely new row is an event. Both duplicate paths above
+        // return early on purpose.
+        ActivityRecorded::dispatch($activity);
+
+        return $activity;
     }
 
     protected function findDuplicate(array $attributes): ?Activity
