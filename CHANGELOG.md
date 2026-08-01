@@ -1,7 +1,6 @@
 # Changelog
 
-## Unreleased
-
+## 1.1.0 — 2026-08-01
 ### Changed — the Control Panel is built out of Statamic's own components now
 
 The domain half of this addon and its Control Panel were never the same quality. The recorder, the immutability guard on both the model and the query builder, the two-key idempotency with its race handler and the migration work were all left untouched here. The two Blade screens were rebuilt.
