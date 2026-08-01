@@ -102,21 +102,58 @@ it('offers a way back to the ledger from a fact', function (): void {
  * property containing a mustache would otherwise be evaluated as an expression
  * in the operator's browser. Every element printing ledger content must opt out.
  */
-it('never lets a stored property reach the vue compiler as an expression', function (): void {
+it('never lets a stored value reach the vue compiler as an expression', function (): void {
     permitted();
 
-    $activity = Activity::record('commerce.purchase_completed', [
-        'properties' => ['note' => '{{ 7 * 7 }}'],
+    $mustache = '{{ 1 + 1 }}';
+
+    $activity = Activity::record($mustache, [
+        'source' => $mustache,
+        'contact_uuid' => $mustache,
+        'user_id' => $mustache,
+        'anonymous_id' => $mustache,
+        'subject_type' => $mustache,
+        'subject_id' => $mustache,
+        'dedupe_key' => $mustache,
+        'properties' => ['note' => $mustache],
+        'context' => ['note' => $mustache],
     ]);
 
     $html = $this->get('/cp/activity/'.$activity->id)->assertOk()->getContent();
 
-    expect($html)->toContain('{{ 7 * 7 }}');
+    // Every one of them has to survive as literal text inside an element Vue is
+    // told to skip. Missing v-pre does not raise anything a PHP test or the
+    // browser console would show — the page compiles to nothing and renders blank.
+    preg_match_all('/<([a-z-]+)([^>]*)>[^<]*\{\{ 1 \+ 1 \}\}/', $html, $matches, PREG_SET_ORDER);
 
-    // The mustache has to sit inside an element that Vue is told to skip.
-    preg_match('/<pre[^>]*>(?:(?!<\/pre>).)*\{\{ 7 \* 7 \}\}/s', $html, $matches);
+    expect($matches)->not->toBeEmpty();
 
-    expect($matches[0] ?? '')->toContain('v-pre');
+    // `toContain` is variadic, so the offending tag goes in the diff rather
+    // than in a message argument that would silently become a second needle.
+    $unguarded = collect($matches)
+        ->reject(fn (array $match) => str_contains($match[2], 'v-pre'))
+        ->map(fn (array $match) => '<'.$match[1].'>')
+        ->all();
+
+    expect($unguarded)->toBe([]);
+});
+
+it('keeps a hostile stored value out of the listing props', function (): void {
+    permitted();
+
+    // These reach the page as JSON inside an attribute: the filter option lists
+    // are built from distinct event types and sources.
+    Activity::record('"><script>alert(1)</script>', ['source' => "it's {{ 1 + 1 }}"]);
+
+    $html = $this->get('/cp/activity')->assertOk()->getContent();
+
+    expect($html)->not->toContain('<script>alert(1)</script>');
+
+    preg_match('/:filters="([^"]*)"/', $html, $matches);
+
+    $filters = json_decode(html_entity_decode($matches[1], ENT_QUOTES), true);
+
+    expect($filters)->toBeArray()->not->toBeEmpty();
 });
 
 it('cannot read another brand\'s fact by guessing its id', function (): void {
