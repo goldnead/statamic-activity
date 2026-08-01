@@ -15,6 +15,15 @@ table, a webhook receipt log. Each solves its own problem and none of them can
 answer a cross-domain question. This package is the one place a fact is recorded
 in a shape that every consumer can read.
 
+## Requirements
+
+| | |
+| --- | --- |
+| PHP | 8.2 or newer |
+| Laravel | 12 or 13 |
+| Statamic | 6 |
+| Database | Any Laravel-supported driver. The schema is tuned for MySQL/InnoDB with `utf8mb4`. |
+
 ## Install
 
 ```bash
@@ -30,7 +39,9 @@ behave inertly in a single-brand, no-CRM application.
 php artisan vendor:publish --tag=activity-config
 ```
 
-## Recording
+## Usage
+
+### Recording
 
 ```php
 use Goldnead\Activity\Facades\Activity;
@@ -50,7 +61,7 @@ context are filled in automatically.
 are captured at **dispatch** time, never in the worker — by the time the job
 runs, the request that caused it is long gone.
 
-### Two idempotency keys
+#### Two idempotency keys
 
 | Key | Guards against | Scope |
 | --- | --- | --- |
@@ -64,7 +75,7 @@ Use a dedupe key for state transitions (a purchase, a confirmation, a bounce).
 Leave it off for repeatable facts (an email open, a page view) — the second open
 is a second fact, and `event_id` alone keeps retries safe.
 
-### Recording never breaks the caller
+#### Recording never breaks the caller
 
 A ledger failure is reported and swallowed. A broken `activities` table must
 never roll back the purchase that produced the event.
@@ -146,11 +157,20 @@ paths that lift the guard. Correct a wrong fact by recording a correcting one.
 
 ## Control Panel
 
-A read-only inspector at **Tools → Activity**: filter by event type, contact,
-user, source and date range; open a single fact to read its properties and
-context. No counts, no charts, no aggregates.
+A read-only inspector at **Tools → Activity**, built on Statamic's own listing:
+search, sort, per-page, column customisation and saved views work the way they
+do on the Entries screen. Filters for event type, source, identity
+(contact uuid / user id / anonymous id), occurrence date and anonymisation
+state; open a single fact to read its properties and context. No counts, no
+charts, no aggregates.
 
-Permissions: `view activity`, and `manage activity retention` beneath it.
+The plain query-string parameters the pre-1.1 inspector used
+(`?event_type=`, `?contact_uuid=`, `?user_id=`, `?source=`, `?anonymous_id=`,
+`?from=`, `?to=`) still work as entry points and are carried into every
+subsequent request the listing makes.
+
+Permission: `view activity`. Set `ACTIVITY_CP=false` to remove the screens and
+the nav item entirely.
 
 ## Extension points
 
@@ -161,6 +181,7 @@ Permissions: `view activity`, and `manage activity retention` beneath it.
 | `ContactLocator` (identity-contracts) | resolve an email to a CRM contact uuid |
 | `AnonymousIdResolver` (identity-contracts) | supply the pseudonymous visitor id |
 | `Activity::query()` | brand-scoped Eloquent, plus `ofType()`, `forIdentity()`, `occurredBetween()` |
+| `ActivityRecorded` event | fired once per fact actually written — a deduplicated write is silent, so a read model cannot double-count |
 
 ## Schema
 
@@ -182,6 +203,31 @@ key — those are facts nobody asked to be deduplicated, and `event_id` holds
 them instead. A producer that cannot build a key must therefore write `null`,
 never an empty-but-present one: that would be constrained, and every event of
 its type in the brand would collapse onto one row.
+
+## Configuration
+
+`config/activity.php`, published with the command above. Every option is
+documented inline; this is the summary.
+
+| Key | Default | What it does |
+| --- | --- | --- |
+| `enabled` | `ACTIVITY_ENABLED`, `true` | Master switch. Off means `record()` returns `null` and writes nothing. |
+| `source` | `ACTIVITY_SOURCE`, `APP_NAME` | The `source` stamped on a fact that does not name one. |
+| `queue.*` | — | Connection and queue name for `recordLater()`. |
+| `context.*` | — | Which request signals get captured, and whether capture happens at all. |
+| `sanitizer.*` | — | Redacted key patterns, the payload size ceiling, and `blocked_event_types`. |
+| `retention.*` | — | Default age for `activity:prune` and `activity:anonymize`. |
+| `producers.marketing` / `producers.leadhub` | `true` | Attach the bundled producers when the sibling addon is installed. |
+| `cp.enabled` | `ACTIVITY_CP`, `true` | Registers the Control Panel screens and the nav item. |
+| `cp.per_page` | `50` | Rows per page the inspector opens with. |
+
+## Upgrading
+
+The 1.0.6 migration narrows `subject_type` to 191 characters and `subject_id`
+to 128 so the composite index fits inside InnoDB's 3072-byte key limit. It
+**refuses to run** rather than truncate: if a stored value is longer than the
+new cap, it throws and leaves the table alone. Shorten or remove the offending
+rows and migrate again.
 
 ## Tests
 
