@@ -1,0 +1,20 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    # A ratchet for new code, not a mandate to rewrite the package. Everything
+    # the level cannot see today sits in the baseline and has to shrink, never
+    # grow.
+    level: 5
+
+    paths:
+        - src
+
+    # The bundled producers reference event classes from the optional sibling
+    # addons (`suggest`, guarded by class_exists). Those classes are legitimately
+    # absent in a bare install, and analysing the files would report every
+    # reference as unknown.
+    excludePaths:
+        - src/Producers/LeadHubProducer.php
+        - src/Producers/MarketingProducer.php

@@ -7,15 +7,31 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+env:
+  # goldnead/statamic-identity-contracts is private, so Composer needs a PAT
+  # with read access configured as the SIBLING_REPOS_TOKEN secret.
+  COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ secrets.SIBLING_REPOS_TOKEN || github.token }}"}}'
+
 jobs:
   pest:
-    name: PHP ${{ matrix.php }}
+    name: PHP ${{ matrix.php }} · Laravel ${{ matrix.laravel }} · ${{ matrix.stability }}
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
         php: ['8.2', '8.3', '8.4']
+        laravel: ['^12.0', '^13.0']
+        stability: [prefer-lowest, prefer-stable]
+        exclude:
+          # Laravel 13 requires PHP ^8.3. Every remaining cell was resolved with
+          # `composer update --dry-run` before this file was committed — a matrix
+          # that does not resolve is worse than no matrix.
+          - php: '8.2'
+            laravel: '^13.0'
 
     steps:
       - name: Checkout
@@ -29,15 +45,79 @@ jobs:
           coverage: none
           tools: composer:v2
 
-      # goldnead/statamic-identity-contracts is private, so Composer needs a PAT
-      # with read access configured as the SIBLING_REPOS_TOKEN secret.
       - name: Install dependencies
-        env:
-          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ secrets.SIBLING_REPOS_TOKEN || github.token }}"}}'
-        run: composer update --prefer-dist --no-progress --no-interaction
+        run: |
+          composer require "laravel/framework:${{ matrix.laravel }}" --no-interaction --no-update
+          composer update --${{ matrix.stability }} --prefer-dist --no-progress --no-interaction
 
-      - name: Show installed sibling versions
-        run: composer show | grep -E 'goldnead|statamic/cms|laravel/framework'
+      - name: Show installed versions
+        run: composer show | grep -E 'goldnead|statamic/cms|laravel/framework|orchestra/testbench'
 
       - name: Run Pest test suite
         run: vendor/bin/pest --colors=always
+
+  mysql:
+    name: MySQL 8
+    runs-on: ubuntu-latest
+
+    # The Migrations suite exists because SQLite has no InnoDB key-length limit,
+    # no utf8mb4 byte arithmetic and no fixed column widths. Running it only on
+    # SQLite is running it against the one engine that cannot fail.
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: activity_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_mysql, intl, fileinfo, gd
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer update --prefer-dist --no-progress --no-interaction
+
+      - name: Run the suite against MySQL
+        run: vendor/bin/pest -c phpunit.mysql.xml --colors=always
+
+  static:
+    name: Style and static analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, curl, libxml, mbstring, zip, intl, fileinfo
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer update --prefer-dist --no-progress --no-interaction
+
+      # Check, never fix. Auto-committing style onto a contributor's branch
+      # rewrites their work without asking.
+      - name: Pint
+        run: vendor/bin/pint --test
+
+      - name: PHPStan
+        run: vendor/bin/phpstan analyse --no-progress

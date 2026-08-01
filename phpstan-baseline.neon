@@ -1,0 +1,85 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Instanceof between Goldnead\\IdentityContracts\\Identity and Goldnead\\IdentityContracts\\Identity will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/ActivityRecorder.php
+
+		-
+			message: '#^Method Goldnead\\Activity\\ActivityRecorder\:\:findDuplicate\(\) should return Goldnead\\Activity\\Models\\Activity\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/ActivityRecorder.php
+
+		-
+			message: '#^Access to an undefined property Goldnead\\Activity\\Models\\Activity\:\:\$actor_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Http/Controllers/Cp/ActivityController.php
+
+		-
+			message: '#^Access to an undefined property Goldnead\\Activity\\Models\\Activity\:\:\$actor_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Http/Controllers/Cp/ActivityController.php
+
+		-
+			message: '#^Access to an undefined property Goldnead\\Activity\\Models\\Activity\:\:\$anonymized\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Http/Controllers/Cp/ActivityController.php
+
+		-
+			message: '#^Access to an undefined property Goldnead\\Activity\\Models\\Activity\:\:\$occurred_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Http/Controllers/Cp/ActivityController.php
+
+		-
+			message: '#^Access to an undefined property Goldnead\\Activity\\Models\\Activity\:\:\$source\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Http/Controllers/Cp/ActivityController.php
+
+		-
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Http/Controllers/Cp/ActivityController.php
+
+		-
+			message: '#^Access to an undefined property Goldnead\\Activity\\Models\\Activity\:\:\$actor_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/Activity.php
+
+		-
+			message: '#^Access to an undefined property Goldnead\\Activity\\Models\\Activity\:\:\$anonymous_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/Activity.php
+
+		-
+			message: '#^Access to an undefined property Goldnead\\Activity\\Models\\Activity\:\:\$contact_uuid\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/Activity.php
+
+		-
+			message: '#^Access to an undefined property Goldnead\\Activity\\Models\\Activity\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Models/Activity.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between non\-falsy\-string and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Sanitizers/DefaultActivitySanitizer.php
+
+		-
+			message: '#^Instanceof between Illuminate\\Http\\Request and Illuminate\\Http\\Request will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/Support/ContextCapture.php

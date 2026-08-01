@@ -1,0 +1,76 @@
+{
+    "severity": {
+        "ui.legacy-blade-shell": "minor",
+        "testing.addon-testcase": "minor",
+        "bootstrap.redundant-registration": "minor",
+        "ui.page-width": "minor"
+    },
+
+    "_rationale": {
+        "ui.legacy-blade-shell": [
+            "Downgraded, not disabled: both hits stay visible in every report.",
+
+            "What the rule is right about: core has no Blade CP pages left, and a Blade page gets no",
+            "client-side Inertia navigation — every filter, sort and page change that leaves the listing",
+            "is a full document load rather than an SPA visit.",
+
+            "What it is wrong about here, against statamic/cms v6.26.0: the page does get breadcrumbs and",
+            "it does get shared props. `Statamic::nonInertiaPageData()` (src/Statamic.php:497-507) puts",
+            "`Inertia::getShared()` on the page object, and breadcrumbs are derived server-side from the",
+            "active nav item, which this addon registers. Verified in the studio playground: the CP",
+            "renders `/ Activity` in the global header and the Tools nav entry is active.",
+
+            "Why it stays: closing it means introducing a Vite build — package.json, @statamic/cms from",
+            "vendor, a committed dist/ plus a CI job that fails on drift, or the composer-dist-plugin",
+            "release-artifact path. This addon has 1.6k lines of PHP, no JS at all, and two read-only",
+            "screens. Core supports the Blade path deliberately (statamic.js:206-212 resolves",
+            "`NonInertiaPage` by compiling the yielded content as a Vue template inside the core Layout),",
+            "and that is exactly what makes the `<ui-*>` components below resolve. Both screens are now",
+            "built out of ui-header, ui-listing, ui-panel, ui-card, ui-badge, ui-button, ui-icon,",
+            "ui-empty-state-menu and ui-docs-callout, with no addon CSS at all.",
+
+            "Adopting a build toolchain for this addon is a decision for Adrian, not a hardening change."
+        ],
+
+        "testing.addon-testcase": [
+            "Downgraded, not disabled.",
+
+            "Statamic\\Testing\\AddonTestCase cannot boot this addon. Its setUp() calls",
+            "`Nav::shouldReceive('build')`, which swaps the Nav facade for a strict Mockery mock; the",
+            "addon's bootAddon() then calls `Nav::extend()` and the mock throws",
+            "`BadMethodCallException: Received Mockery_1_Statamic_CP_Navigation_Nav::extend(), but no",
+            "expectations were specified`. Reproduced on 2026-08-01 with a probe test before this entry",
+            "was written. AddonTestCase also never invokes bootAddon() itself, so the hand-rolled call",
+            "in tests/TestCase.php would have to stay either way.",
+
+            "The bed it would replace is not incidental: it runs the identical suite against real MySQL",
+            "via DB_DRIVER=mysql (phpunit.mysql.xml), because the column widths and InnoDB key limits",
+            "this addon narrows do not exist in SQLite. Moving to AddonTestCase means rebuilding that.",
+
+            "Worth revisiting when core stops mocking Nav in AddonTestCase::setUp()."
+        ],
+
+        "bootstrap.redundant-registration": [
+            "The premise does not hold for this layout. AddonServiceProvider::autoloadFilesFromFolder()",
+            "is non-recursive and scans `Scopes`, `Query/Scopes` and `Query/Scopes/Filters` only; these",
+            "classes live in `src/Scopes/Filters/`, which is never scanned.",
+
+            "The deeper reason the property stays even if they were moved: the parent's scope path runs",
+            "after Statamic's own boot sequence, which never fires under Testbench, so `Scope::filters()`",
+            "returns nothing in the test suite. bootFilters() registers them the same way and for the",
+            "same documented reason as bootCommands(). Registration is idempotent, so the parent",
+            "repeating it later costs nothing. tests/Feature/CpFilterScopeTest.php pins the full list, so",
+            "an added filter that is left out of the property fails the suite rather than going missing."
+        ],
+
+        "ui.page-width": [
+            "`max-w-5xl 3xl:max-w-6xl mx-auto` with `data-max-width-wrapper` is core's own narrow-page",
+            "variant for detail and settings screens — pages/forms/Show.vue:61,",
+            "pages/preferences/Edit.vue:14, pages/utilities/Licensing.vue:19, and it is documented as",
+            "such in standards/ui-vocabulary.md §2.3. The wrapper carries `data-max-width-wrapper`, so",
+            "the header's full-width toggle still applies. The listing page uses `max-w-page`.",
+
+            "The rule reads `max-w-` literally and cannot tell the two variants apart."
+        ]
+    }
+}

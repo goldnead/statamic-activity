@@ -43,15 +43,17 @@
         "php": "^8.2",
         "goldnead/statamic-brand-context": "^1.0",
         "goldnead/statamic-identity-contracts": "^1.0",
-        "laravel/framework": "^11.0|^12.0|^13.0",
+        "laravel/framework": "^12.0|^13.0",
         "statamic/cms": "^6.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
-        "pestphp/pest": "^2.0|^3.0|^4.0",
-        "pestphp/pest-plugin-laravel": "^2.0|^3.0|^4.0",
+        "goldnead/statamic-leadhub": "^1.4",
         "goldnead/statamic-marketing": "^1.4",
-        "goldnead/statamic-leadhub": "^1.4"
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.18",
+        "orchestra/testbench": "^10.0|^11.0",
+        "pestphp/pest": "^2.0|^3.0|^4.0",
+        "pestphp/pest-plugin-laravel": "^2.0|^3.0|^4.0"
     },
     "suggest": {
         "goldnead/statamic-marketing": "Enables the bundled marketing producer (subscriptions, campaigns, message events).",
@@ -70,7 +72,11 @@
     "extra": {
         "statamic": {
             "name": "Activity",
-            "description": "Immutable, brand-scoped activity ledger."
+            "slug": "activity",
+            "description": "Immutable, brand-scoped activity ledger.",
+            "url": "https://github.com/goldnead/statamic-activity",
+            "developer": "Adrian Goldner",
+            "developer-url": "https://gldnr.studio"
         },
         "laravel": {
             "providers": [
@@ -84,6 +90,15 @@
     "scripts": {
         "test": [
             "@php vendor/bin/pest"
+        ],
+        "lint": [
+            "@php vendor/bin/pint --test"
+        ],
+        "fix": [
+            "@php vendor/bin/pint"
+        ],
+        "analyse": [
+            "@php vendor/bin/phpstan analyse"
         ]
     },
     "config": {
