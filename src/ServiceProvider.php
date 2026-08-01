@@ -9,6 +9,7 @@ use Goldnead\Activity\Producers\LeadHubProducer;
 use Goldnead\Activity\Producers\MarketingProducer;
 use Goldnead\Activity\Producers\ProducerRegistry;
 use Goldnead\Activity\Sanitizers\DefaultActivitySanitizer;
+use Goldnead\Activity\Scopes\Filters;
 use Goldnead\Activity\Support\ContextCapture;
 use Statamic\Facades\CP\Nav;
 use Statamic\Facades\Permission;
@@ -20,6 +21,25 @@ class ServiceProvider extends AddonServiceProvider
         'cp' => __DIR__.'/../routes/cp.php',
     ];
 
+    /**
+     * The filters offered by the Control Panel listing. Registered explicitly
+     * rather than autoloaded: AddonServiceProvider only scans `Scopes`,
+     * `Query/Scopes` and `Query/Scopes/Filters` at their top level, and these
+     * live one folder deeper.
+     */
+    protected $scopes = [
+        Filters\EventType::class,
+        Filters\Source::class,
+        Filters\Identity::class,
+        Filters\OccurredAt::class,
+        Filters\Anonymized::class,
+    ];
+
+    /**
+     * Read by bootCommands() below, not by the parent. The parent's $commands
+     * path only fires once Statamic has booted, which leaves the commands
+     * missing in a plain console or test context — see bootCommands().
+     */
     protected $commands = [
         PruneActivitiesCommand::class,
         AnonymizeActivitiesCommand::class,
@@ -57,8 +77,24 @@ class ServiceProvider extends AddonServiceProvider
         $this->registerNavigation()
             ->registerPermissions()
             ->bootCommands()
+            ->bootFilters()
             ->registerProducers()
             ->registerPublishables();
+    }
+
+    /**
+     * Same reasoning as bootCommands(): the parent's $scopes path only runs once
+     * Statamic's own boot sequence has fired, which never happens in a plain
+     * console or test context. Registration is idempotent, so the parent
+     * repeating it later costs nothing.
+     */
+    protected function bootFilters(): self
+    {
+        foreach ($this->scopes as $scope) {
+            $scope::register();
+        }
+
+        return $this;
     }
 
     /**
@@ -104,7 +140,9 @@ class ServiceProvider extends AddonServiceProvider
         Nav::extend(function ($nav): void {
             $nav->create(__('activity::cp.nav'))
                 ->section('Tools')
-                ->icon('<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12h4l3 8 4-16 3 8h4" /></svg>')
+                // A name from Statamic's own set, not a raw SVG: only the named
+                // icons pick up the CP's sizing and stroke conventions.
+                ->icon('pulse')
                 ->route('activity.index')
                 ->can('view activity');
         });
@@ -114,14 +152,15 @@ class ServiceProvider extends AddonServiceProvider
 
     protected function registerPermissions(): self
     {
+        // One permission, because there is one thing to permit. `manage
+        // activity retention` used to sit beneath this and was checked
+        // nowhere: retention and anonymisation are artisan-only paths and
+        // artisan does not consult Gates. A checkbox that controls nothing is
+        // worse than no checkbox.
         Permission::extend(function (): void {
             Permission::group('activity', __('activity::cp.nav'), function (): void {
                 Permission::register('view activity')
-                    ->label(__('activity::cp.permission_view'))
-                    ->children([
-                        Permission::make('manage activity retention')
-                            ->label(__('activity::cp.permission_retention')),
-                    ]);
+                    ->label(__('activity::cp.permission_view'));
             });
         });
 

@@ -18,10 +18,20 @@ abstract class SiblingsTestCase extends TestCase
         parent::setUp();
     }
 
+    /**
+     * The siblings have to boot before this addon does, so its producers can
+     * see their events. Selected by name rather than by position — a positional
+     * slice silently drops whichever provider the parent adds next.
+     */
     protected function getPackageProviders($app): array
     {
+        $foundation = array_values(array_filter(
+            parent::getPackageProviders($app),
+            fn (string $provider) => $provider !== \Goldnead\Activity\ServiceProvider::class,
+        ));
+
         return [
-            ...array_slice(parent::getPackageProviders($app), 0, 3),
+            ...$foundation,
             \Goldnead\Leadhub\ServiceProvider::class,
             \Goldnead\Marketing\ServiceProvider::class,
             \Goldnead\Activity\ServiceProvider::class,

@@ -29,6 +29,7 @@ abstract class TestCase extends Orchestra
         $this->withoutVite();
 
         $this->giveTestbenchAComposerLock();
+        $this->forgetUsersLeftBehindByOtherTests();
 
         app('brand-context')->forget();
         app('identity-context')->forget();
@@ -39,6 +40,11 @@ abstract class TestCase extends Orchestra
     {
         return [
             StatamicServiceProvider::class,
+            // The CP is an Inertia app and its exception handler asks the
+            // request whether it is an Inertia visit. Without the provider the
+            // macro is missing and every error page throws instead of
+            // rendering, which turns an expected 404 into a 500.
+            \Inertia\ServiceProvider::class,
             \Goldnead\BrandContext\ServiceProvider::class,
             \Goldnead\IdentityContracts\ServiceProvider::class,
             ServiceProvider::class,
@@ -156,7 +162,6 @@ abstract class TestCase extends Orchestra
         'automation', 'rule', 'template', 'webhook', 'endpoint', 'handle', 'id', 'slug', 'record',
     ];
 
-
     /**
      * Statamic's CP layout resolves its own version from `base_path('composer.lock')`
      * and throws without one. The testbench app has no lock file of its own, so
@@ -175,6 +180,26 @@ abstract class TestCase extends Orchestra
         if (file_exists($source)) {
             @copy($source, $target);
         }
+    }
+
+    /**
+     * The file user repository writes into the testbench app, which lives in
+     * vendor/ and survives both the test and the run. Two tests that each save
+     * a user leave two on disk, and the third request into the CP dies on
+     * "Statamic Pro is required for multiple users" — a failure with nothing to
+     * do with the test that hits it.
+     */
+    protected function forgetUsersLeftBehindByOtherTests(): void
+    {
+        $directory = config('statamic.stache.stores.users.directory');
+
+        if ($directory && is_dir($directory)) {
+            foreach (glob(rtrim($directory, '/').'/*.yaml') ?: [] as $file) {
+                @unlink($file);
+            }
+        }
+
+        \Statamic\Facades\Stache::store('users')->clear();
     }
 
     protected function enableMultiBrand(): void
