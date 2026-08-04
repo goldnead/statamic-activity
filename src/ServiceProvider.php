@@ -22,6 +22,21 @@ class ServiceProvider extends AddonServiceProvider
     ];
 
     /**
+     * Statamic 6 reads an addon's Vite config from this property and from
+     * nowhere else — `extra.statamic.vite` in composer.json is carried for
+     * documentation, but the CP never looks at it. The three values have to
+     * byte-match `laravel()` in vite.config.js, or registerVite() publishes
+     * from a directory the build never wrote to and the CP loads nothing.
+     */
+    protected $vite = [
+        'input' => [
+            'resources/js/cp.js',
+            'resources/css/cp.css',
+        ],
+        'publicDirectory' => 'resources/dist',
+    ];
+
+    /**
      * The filters offered by the Control Panel listing. Registered explicitly
      * rather than autoloaded: AddonServiceProvider only scans `Scopes`,
      * `Query/Scopes` and `Query/Scopes/Filters` at their top level, and these
