@@ -67,6 +67,15 @@ describe('a single fact', () => {
         expect(back.attributes('data-attr-icon')).toBe('arrow-left');
     });
 
+    it('puts that way back into the command palette', () => {
+        // Every core page-level action is a palette entry; skipping it is what
+        // makes an addon feel inert next to core.
+        const entry = page().findComponent({ name: 'CommandPaletteItem' });
+
+        expect(entry.attributes('data-attr-category')).toBe('Actions');
+        expect(entry.attributes('data-attr-url')).toBe('/cp/activity');
+    });
+
     it('shows a missing value as a dash rather than as a gap', () => {
         // A row that quietly disappears reads as "not shown"; a dash reads as
         // "not recorded". The distinction matters on a ledger.

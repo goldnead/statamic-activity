@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { Head } from '@statamic/cms/inertia';
-import { Header, Button, Panel, Card, Badge } from '@statamic/cms/ui';
+import { Header, Button, Panel, Card, Badge, CommandPaletteItem } from '@statamic/cms/ui';
 
 const props = defineProps([
     'fact',     // the single ledger row, already reduced server-side to the fields this screen shows
@@ -37,12 +37,25 @@ const pretty = (value) => JSON.stringify(value ?? null, null, 4);
                 <code class="text-xl">{{ fact.event_type }}</code>
             </template>
 
-            <Button
-                :href="backUrl"
+            <!--
+                Leaving is the only thing there is to do on an immutable fact,
+                so it is this page's primary action and core wraps every one of
+                those in a palette entry (ui-vocabulary §2.6). The button is
+                unchanged; it is now reachable from the command palette too.
+            -->
+            <CommandPaletteItem
+                category="Actions"
                 icon="arrow-left"
                 :text="__('activity::cp.back_to_ledger')"
-                variant="ghost"
-            />
+                :url="backUrl"
+            >
+                <Button
+                    :href="backUrl"
+                    icon="arrow-left"
+                    :text="__('activity::cp.back_to_ledger')"
+                    variant="ghost"
+                />
+            </CommandPaletteItem>
         </Header>
 
         <Panel :heading="__('activity::cp.detail_fact')">
