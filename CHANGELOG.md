@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 — 2026-08-04
 ### Changed — the Control Panel is an Inertia + Vue app now
 
 1.1.0 rebuilt the two screens out of Statamic's own components but kept them as Blade, rendered through core's NonInertiaPage compatibility path. That path is legacy, not a target: no breadcrumbs, no Inertia navigation, no shared props. Both screens are now Inertia pages backed by single-file Vue components, built by Vite like the other addons in this family.
