@@ -86,8 +86,10 @@ class ServiceProvider extends AddonServiceProvider
 
     public function bootAddon(): void
     {
+        // No loadViewsFrom: the Control Panel is Inertia + Vue and the addon
+        // ships no Blade views at all any more. Registering an empty namespace
+        // would only advertise an extension point that does not exist.
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'activity');
 
         $this->registerNavigation()
             ->registerPermissions()
