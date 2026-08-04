@@ -27,6 +27,12 @@ class ServiceProvider extends AddonServiceProvider
      * documentation, but the CP never looks at it. The three values have to
      * byte-match `laravel()` in vite.config.js, or registerVite() publishes
      * from a directory the build never wrote to and the CP loads nothing.
+     *
+     * The parent annotates this `list<string>`, which is not what registerVite()
+     * reads — it asks for `input`, `publicDirectory` and `hotFile` by key. The
+     * annotation is wrong upstream and cannot be corrected from here: a `@var`
+     * describing the real shape is rejected as non-covariant with the parent's.
+     * Hence the one baseline entry, which every sibling addon carries too.
      */
     protected $vite = [
         'input' => [
