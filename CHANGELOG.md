@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+### Changed — the Control Panel is an Inertia + Vue app now
+
+1.1.0 rebuilt the two screens out of Statamic's own components but kept them as Blade, rendered through core's NonInertiaPage compatibility path. That path is legacy, not a target: no breadcrumbs, no Inertia navigation, no shared props. Both screens are now Inertia pages backed by single-file Vue components, built by Vite like the other addons in this family.
+
+Nothing about what the screens do has changed. Same routes, same route names, same columns, same filters, same JSON contract, same deep links, same permission. This is a port, not a redesign.
+
+- **`ActivityController` returns `Inertia::render()`** for `activity::Index` and `activity::Show`. `index()` still answers the same route twice — the page for a browser, the listing contract for `<Listing>`.
+- **The detail payload is assembled field by field.** Handing the model to Inertia would put whatever the table happens to carry into a prop the browser can read, including columns a later migration adds. A test pins the exact field list.
+- **The two documentation URLs are props**, not strings baked into the bundle.
+- **`resources/views` is gone**, and with it `loadViewsFrom`. The addon ships no Blade views at all.
+- **`resources/dist/build` is committed** and guarded by `npm run build:check` plus a CI job. Composer installs never run npm, so the compiled bundle has to ship in git and has to match the source.
+
+### Fixed — a stored property can no longer be evaluated as a Vue expression
+
+1.1.0 handled this by putting `v-pre` on every element that printed ledger content, because the yielded Blade was compiled as a Vue template in the operator's browser. A compiled component interpolates instead of compiling, so the whole class of failure is gone rather than guarded against. The tests that asserted `v-pre` now assert that a stored mustache arrives as literal text.
+
 ## 1.1.0 — 2026-08-01
 ### Changed — the Control Panel is built out of Statamic's own components now
 
