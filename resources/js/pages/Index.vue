@@ -50,9 +50,16 @@ const isEmpty = computed(() => ! props.hasAny);
         </template>
 
         <template v-else>
-            <Header :title="__('activity::cp.title')" icon="pulse">
-                <Description :text="__('activity::cp.intro')" />
-            </Header>
+            <!--
+                <Header> declares only `icon` and `title`; its default slot is the
+                right-hand action row (the h1 carries `md:flex-1`). A <Description>
+                placed there is right-aligned across from the title, which no core
+                screen does. It belongs under the header, the way statamic-notifications
+                already renders it.
+            -->
+            <Header :title="__('activity::cp.title')" icon="pulse" />
+
+            <Description :text="__('activity::cp.intro')" class="mb-4" />
 
             <!--
                 Server mode: the listing re-requests this same route as JSON on

@@ -60,20 +60,28 @@ const pretty = (value) => JSON.stringify(value ?? null, null, 4);
 
         <Panel :heading="__('activity::cp.detail_fact')">
             <Card>
-                <dl class="grid grid-cols-1 sm:grid-cols-[12rem_1fr] gap-x-6 gap-y-2 text-sm">
-                    <dt class="text-gray-500">{{ __('activity::cp.col_occurred') }}</dt>
+                <!--
+                    No `grid-cols-1`: a grid falls back to one column on its own,
+                    and every sibling addon that ships a Tailwind build emits its own
+                    unconditional `.grid-cols-1` rule. Whichever addon stylesheet loads
+                    last wins, which flattened this list back to one column whenever
+                    another goldnead addon was installed alongside. Dropping the class
+                    means no foreign rule can match the element at all.
+                -->
+                <dl class="grid sm:grid-cols-[12rem_1fr] gap-x-6 gap-y-2 text-sm">
+                    <dt class="text-gray-500 dark:text-gray-400">{{ __('activity::cp.col_occurred') }}</dt>
                     <dd>{{ dash(fact.occurred_at) }}</dd>
 
-                    <dt class="text-gray-500">{{ __('activity::cp.detail_received') }}</dt>
+                    <dt class="text-gray-500 dark:text-gray-400">{{ __('activity::cp.detail_received') }}</dt>
                     <dd>{{ dash(fact.received_at) }}</dd>
 
-                    <dt class="text-gray-500">{{ __('activity::cp.col_source') }}</dt>
+                    <dt class="text-gray-500 dark:text-gray-400">{{ __('activity::cp.col_source') }}</dt>
                     <dd>{{ dash(fact.source) }}</dd>
 
-                    <dt class="text-gray-500">{{ __('activity::cp.detail_event_id') }}</dt>
+                    <dt class="text-gray-500 dark:text-gray-400">{{ __('activity::cp.detail_event_id') }}</dt>
                     <dd><code class="text-xs">{{ fact.event_id }}</code></dd>
 
-                    <dt class="text-gray-500">{{ __('activity::cp.detail_dedupe_key') }}</dt>
+                    <dt class="text-gray-500 dark:text-gray-400">{{ __('activity::cp.detail_dedupe_key') }}</dt>
                     <dd><code class="text-xs">{{ dash(fact.dedupe_key) }}</code></dd>
                 </dl>
 
@@ -85,17 +93,17 @@ const pretty = (value) => JSON.stringify(value ?? null, null, 4);
 
         <Panel :heading="__('activity::cp.detail_identity')">
             <Card>
-                <dl class="grid grid-cols-1 sm:grid-cols-[12rem_1fr] gap-x-6 gap-y-2 text-sm">
-                    <dt class="text-gray-500">{{ __('activity::cp.col_actor') }}</dt>
+                <dl class="grid sm:grid-cols-[12rem_1fr] gap-x-6 gap-y-2 text-sm">
+                    <dt class="text-gray-500 dark:text-gray-400">{{ __('activity::cp.col_actor') }}</dt>
                     <dd>{{ actor }}</dd>
 
-                    <dt class="text-gray-500">{{ __('activity::cp.filter_contact') }}</dt>
+                    <dt class="text-gray-500 dark:text-gray-400">{{ __('activity::cp.filter_contact') }}</dt>
                     <dd>{{ dash(fact.contact_uuid) }}</dd>
 
-                    <dt class="text-gray-500">{{ __('activity::cp.filter_user') }}</dt>
+                    <dt class="text-gray-500 dark:text-gray-400">{{ __('activity::cp.filter_user') }}</dt>
                     <dd>{{ dash(fact.user_id) }}</dd>
 
-                    <dt class="text-gray-500">{{ __('activity::cp.filter_anonymous') }}</dt>
+                    <dt class="text-gray-500 dark:text-gray-400">{{ __('activity::cp.filter_anonymous') }}</dt>
                     <dd>{{ dash(fact.anonymous_id) }}</dd>
                 </dl>
             </Card>
