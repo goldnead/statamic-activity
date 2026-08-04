@@ -61,14 +61,20 @@ const pretty = (value) => JSON.stringify(value ?? null, null, 4);
         <Panel :heading="__('activity::cp.detail_fact')">
             <Card>
                 <!--
-                    No `grid-cols-1`: a grid falls back to one column on its own,
-                    and every sibling addon that ships a Tailwind build emits its own
-                    unconditional `.grid-cols-1` rule. Whichever addon stylesheet loads
-                    last wins, which flattened this list back to one column whenever
-                    another goldnead addon was installed alongside. Dropping the class
-                    means no foreign rule can match the element at all.
+                    The single-column grid utility is deliberately absent: a grid
+                    falls back to one column on its own, and every sibling addon
+                    shipping a Tailwind build emits that same bare,
+                    breakpoint-less rule into the shared `addon-utilities` layer.
+                    Whichever addon stylesheet loads last wins, which flattened
+                    this list back to one column whenever another goldnead addon
+                    was installed alongside.
+
+                    Do not name the class in a comment either — Tailwind scans
+                    comments as candidates, so the earlier wording of this very
+                    note kept emitting the rule it was warning about, and the
+                    fix did nothing until it was reworded.
                 -->
-                <dl class="grid sm:grid-cols-[12rem_1fr] gap-x-6 gap-y-2 text-sm">
+                <dl class="grid sm:grid-cols-[12rem_1fr] gap-x-6 gap-y-2 text-sm *:min-w-0">
                     <dt class="text-gray-500 dark:text-gray-400">{{ __('activity::cp.col_occurred') }}</dt>
                     <dd>{{ dash(fact.occurred_at) }}</dd>
 
@@ -93,7 +99,7 @@ const pretty = (value) => JSON.stringify(value ?? null, null, 4);
 
         <Panel :heading="__('activity::cp.detail_identity')">
             <Card>
-                <dl class="grid sm:grid-cols-[12rem_1fr] gap-x-6 gap-y-2 text-sm">
+                <dl class="grid sm:grid-cols-[12rem_1fr] gap-x-6 gap-y-2 text-sm *:min-w-0">
                     <dt class="text-gray-500 dark:text-gray-400">{{ __('activity::cp.col_actor') }}</dt>
                     <dd>{{ actor }}</dd>
 
