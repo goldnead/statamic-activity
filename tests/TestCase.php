@@ -36,7 +36,20 @@ abstract class TestCase extends Orchestra
         // page would 500 on "View [app] not found". Naming the CP's root view
         // here is exactly what core does when it has to render outside that
         // middleware (RendersControlPanelExceptions).
-        Inertia::setRootView(HandleInertiaRequests::ROOT_VIEW);
+        //
+        // Read through `defined()` rather than named directly: the constant is
+        // newer than the `statamic/cms: ^6.0` this addon supports, so on the
+        // lowest core the suite is meant to prove installable, naming it was a
+        // fatal error before a single test ran. Nothing in `src/` needs it — the
+        // addon runs on those cores, only the harness did not — so tolerating
+        // its absence is the honest fix, and raising the constraint to make the
+        // harness happy would have narrowed the addon for no reason. The literal
+        // is the value the constant carries and the CP layout's stable name.
+        Inertia::setRootView(
+            defined(HandleInertiaRequests::class.'::ROOT_VIEW')
+                ? HandleInertiaRequests::ROOT_VIEW
+                : 'statamic::layout'
+        );
 
         $this->giveTestbenchAComposerLock();
         $this->forgetUsersLeftBehindByOtherTests();
