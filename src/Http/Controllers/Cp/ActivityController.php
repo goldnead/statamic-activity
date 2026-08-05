@@ -8,6 +8,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
+use Inertia\Inertia;
 use Statamic\CP\Column;
 use Statamic\Facades\Scope;
 use Statamic\Http\Requests\FilteredRequest;
@@ -19,14 +20,17 @@ use Statamic\Query\Scopes\Filters\Concerns\QueriesFilters;
  * addon — mixing them in here is how a ledger quietly turns into an analytics
  * product with no schema discipline.
  *
- * `index()` serves two representations of the same query: the HTML shell that
- * boots the native <ui-listing>, and the JSON that listing then fetches on
- * every search, sort, filter and page change. That is core's own arrangement
- * (see FormsController) and it is why there is no second "data" route.
+ * `index()` serves two representations of the same query: the Inertia page that
+ * boots the native <Listing>, and the JSON that listing then fetches on every
+ * search, sort, filter and page change. That is core's own arrangement (see
+ * FormsController) and it is why there is no second "data" route.
  */
 class ActivityController extends Controller
 {
     use QueriesFilters;
+
+    /** The docs the two screens link to. Passed as props so the Vue pages hold no URLs of their own. */
+    private const DOCS_URL = 'https://github.com/goldnead/statamic-activity';
 
     /**
      * Sorting is whitelisted rather than passed through: `sort` arrives from
@@ -45,13 +49,15 @@ class ActivityController extends Controller
             return $this->listing($request);
         }
 
-        return view('activity::cp.index', [
+        return Inertia::render('activity::Index', [
             'columns' => collect($this->columns())->map->toArray()->all(),
             'filters' => Scope::filters(ActivityFilter::LISTING_KEY),
             'hasAny' => Activity::query()->exists(),
             'listingUrl' => cp_route('activity.index'),
             'deepLinkParameters' => $this->deepLinkParameters($request),
             'perPage' => $this->perPage(null),
+            'docsUrl' => self::DOCS_URL.'#control-panel',
+            'recordingDocsUrl' => self::DOCS_URL.'#recording',
         ]);
     }
 
@@ -63,10 +69,42 @@ class ActivityController extends Controller
         // read a brand B row by guessing its id.
         $activity = Activity::query()->findOrFail($id);
 
-        return view('activity::cp.show', [
-            'activity' => $activity,
+        return Inertia::render('activity::Show', [
+            'fact' => $this->fact($activity),
             'backUrl' => cp_route('activity.index'),
         ]);
+    }
+
+    /**
+     * The detail screen's payload, assembled field by field rather than by
+     * handing the model to Inertia. A model would serialise whatever the table
+     * happens to carry — brand scoping columns today, anything a migration adds
+     * tomorrow — into a prop the browser can read. This lists what the screen
+     * shows and nothing else.
+     *
+     * @return array<string, mixed>
+     */
+    private function fact(Activity $activity): array
+    {
+        return [
+            'id' => $activity->id,
+            'event_type' => $activity->event_type,
+            'event_id' => $activity->event_id,
+            'dedupe_key' => $activity->dedupe_key,
+            'occurred_at' => $activity->occurred_at?->format('Y-m-d H:i:s'),
+            'received_at' => $activity->received_at?->format('Y-m-d H:i:s'),
+            'source' => $activity->source,
+            'anonymized' => (bool) $activity->anonymized,
+            'actor_type' => $activity->actor_type,
+            'actor_id' => $activity->actor_id,
+            'contact_uuid' => $activity->contact_uuid,
+            'user_id' => $activity->user_id,
+            'anonymous_id' => $activity->anonymous_id,
+            'subject_type' => $activity->subject_type,
+            'subject_id' => $activity->subject_id,
+            'properties' => $activity->properties,
+            'context' => $activity->context,
+        ];
     }
 
     /** The <ui-listing> response contract: `data` plus a `meta` carrying columns on every page. */

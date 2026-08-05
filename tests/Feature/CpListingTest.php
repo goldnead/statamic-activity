@@ -102,12 +102,13 @@ it('keeps the pre-rewrite query-string filters working', function (): void {
 it('hands those deep-link parameters to the listing so they survive the next request', function (): void {
     Activity::record('account.login', ['contact_uuid' => 'c-1']);
 
-    $html = $this->get('/cp/activity?contact_uuid=c-1')->assertOk()->getContent();
-
-    preg_match('/:additional-parameters="([^"]*)"/', $html, $matches);
-
-    expect(json_decode(html_entity_decode($matches[1], ENT_QUOTES), true))
-        ->toBe(['contact_uuid' => 'c-1']);
+    // The page hands them to <Listing :additional-parameters>, so asserting on
+    // the prop is asserting on what survives every subsequent search and page.
+    $this->get('/cp/activity?contact_uuid=c-1')
+        ->assertOk()
+        ->assertInertia(fn (Inertia\Testing\AssertableInertia $page) => $page
+            ->where('deepLinkParameters', ['contact_uuid' => 'c-1'])
+        );
 });
 
 it('does not narrow the ledger because a date boundary was unparseable', function (): void {

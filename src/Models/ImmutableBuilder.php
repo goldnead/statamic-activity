@@ -15,6 +15,12 @@ use Illuminate\Database\Eloquent\Builder;
  *
  * The retention and anonymisation commands legitimately need both, and they run
  * inside `Activity::mutable()`, which lifts the guard for the duration.
+ *
+ * The generic parameter is what makes `Activity::query()->findOrFail()` an
+ * Activity rather than a bare Model. Without it every caller had to widen its
+ * own signature or carry a baseline entry.
+ *
+ * @extends Builder<Activity>
  */
 class ImmutableBuilder extends Builder
 {

@@ -1,5 +1,42 @@
 # Changelog
 
+## 1.2.1 — 2026-08-05
+
+### Fixed — the breakpoint-less single-column grid utility is no longer used
+
+Every addon in this family ships its own Tailwind build, and `@statamic/cms/tailwind.css`
+routes all of them into the same `addon-utilities` layer. Media queries add no specificity, so
+the bare single-column grid rule from whichever addon stylesheet loads **last** won against an
+earlier addon's `sm:`/`lg:` variant and pinned that addon's grid to one column at every width.
+
+Invisible when this addon is checked alone. It only appeared once two addons of the family were
+installed together, which is the normal case on a real site.
+
+A grid falls back to one column on its own, so the class bought nothing. The overflow guard its
+`minmax(0,1fr)` track provided is preserved explicitly, because the implicit column is `auto`.
+
+1.2.0 already removed the class from the markup and explained in the comment beside it why.
+Tailwind scans comment text as candidates, so that explanation kept emitting the very rule it
+warned about: the fix shipped, and the bundle was unchanged. The comment no longer names the
+class, and `addon-lint` enforces that as `ui.bare-single-column-grid`, comments included.
+
+## 1.2.0 — 2026-08-04
+### Changed — the Control Panel is an Inertia + Vue app now
+
+1.1.0 rebuilt the two screens out of Statamic's own components but kept them as Blade, rendered through core's NonInertiaPage compatibility path. That path is legacy, not a target: no breadcrumbs, no Inertia navigation, no shared props. Both screens are now Inertia pages backed by single-file Vue components, built by Vite like the other addons in this family.
+
+Nothing about what the screens do has changed. Same routes, same route names, same columns, same filters, same JSON contract, same deep links, same permission. This is a port, not a redesign.
+
+- **`ActivityController` returns `Inertia::render()`** for `activity::Index` and `activity::Show`. `index()` still answers the same route twice — the page for a browser, the listing contract for `<Listing>`.
+- **The detail payload is assembled field by field.** Handing the model to Inertia would put whatever the table happens to carry into a prop the browser can read, including columns a later migration adds. A test pins the exact field list.
+- **The two documentation URLs are props**, not strings baked into the bundle.
+- **`resources/views` is gone**, and with it `loadViewsFrom`. The addon ships no Blade views at all.
+- **`resources/dist/build` is committed** and guarded by `npm run build:check` plus a CI job. Composer installs never run npm, so the compiled bundle has to ship in git and has to match the source.
+
+### Fixed — a stored property can no longer be evaluated as a Vue expression
+
+1.1.0 handled this by putting `v-pre` on every element that printed ledger content, because the yielded Blade was compiled as a Vue template in the operator's browser. A compiled component interpolates instead of compiling, so the whole class of failure is gone rather than guarded against. The tests that asserted `v-pre` now assert that a stored mustache arrives as literal text.
+
 ## 1.1.0 — 2026-08-01
 ### Changed — the Control Panel is built out of Statamic's own components now
 

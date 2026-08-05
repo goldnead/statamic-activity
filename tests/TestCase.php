@@ -5,7 +5,9 @@ namespace Goldnead\Activity\Tests;
 use Goldnead\Activity\ServiceProvider;
 use Goldnead\BrandContext\Models\Brand;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Inertia;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Statamic\Http\Middleware\CP\HandleInertiaRequests;
 use Statamic\Providers\StatamicServiceProvider;
 use Statamic\Statamic;
 
@@ -25,8 +27,29 @@ abstract class TestCase extends Orchestra
         $this->artisan('migrate')->run();
 
         // The CP layout pulls Statamic's own Vite bundle, which is not published
-        // into the testbench app. The inspector's markup is what we assert on.
+        // into the testbench app. The props the server ships are what we assert on.
         $this->withoutVite();
+
+        // Testbench flushes the addon's CP routes into Laravel's `web` group
+        // rather than into `statamic.cp`, so Statamic's HandleInertiaRequests
+        // never runs and Inertia keeps its own default root view — every CP
+        // page would 500 on "View [app] not found". Naming the CP's root view
+        // here is exactly what core does when it has to render outside that
+        // middleware (RendersControlPanelExceptions).
+        //
+        // Read through `defined()` rather than named directly: the constant is
+        // newer than the `statamic/cms: ^6.0` this addon supports, so on the
+        // lowest core the suite is meant to prove installable, naming it was a
+        // fatal error before a single test ran. Nothing in `src/` needs it — the
+        // addon runs on those cores, only the harness did not — so tolerating
+        // its absence is the honest fix, and raising the constraint to make the
+        // harness happy would have narrowed the addon for no reason. The literal
+        // is the value the constant carries and the CP layout's stable name.
+        Inertia::setRootView(
+            defined(HandleInertiaRequests::class.'::ROOT_VIEW')
+                ? HandleInertiaRequests::ROOT_VIEW
+                : 'statamic::layout'
+        );
 
         $this->giveTestbenchAComposerLock();
         $this->forgetUsersLeftBehindByOtherTests();
@@ -74,6 +97,14 @@ abstract class TestCase extends Orchestra
         $app['config']->set('activity.enabled', true);
         $app['config']->set('activity.source', 'test-suite');
         $app['config']->set('queue.default', 'sync');
+
+        // Inertia's test helper otherwise tries to resolve every asserted
+        // component to a .vue file under the host app's page paths. An addon
+        // page is not a file there: it is registered at runtime from the
+        // addon's own bundle (Statamic.$inertia.register in resources/js/cp.js),
+        // so the check can never pass and would only assert that the host app
+        // does not ship our pages.
+        $app['config']->set('inertia.testing.ensure_pages_exist', false);
     }
 
     /**

@@ -22,6 +22,27 @@ class ServiceProvider extends AddonServiceProvider
     ];
 
     /**
+     * Statamic 6 reads an addon's Vite config from this property and from
+     * nowhere else — `extra.statamic.vite` in composer.json is carried for
+     * documentation, but the CP never looks at it. The three values have to
+     * byte-match `laravel()` in vite.config.js, or registerVite() publishes
+     * from a directory the build never wrote to and the CP loads nothing.
+     *
+     * The parent annotates this `list<string>`, which is not what registerVite()
+     * reads — it asks for `input`, `publicDirectory` and `hotFile` by key. The
+     * annotation is wrong upstream and cannot be corrected from here: a `@var`
+     * describing the real shape is rejected as non-covariant with the parent's.
+     * Hence the one baseline entry, which every sibling addon carries too.
+     */
+    protected $vite = [
+        'input' => [
+            'resources/js/cp.js',
+            'resources/css/cp.css',
+        ],
+        'publicDirectory' => 'resources/dist',
+    ];
+
+    /**
      * The filters offered by the Control Panel listing. Registered explicitly
      * rather than autoloaded: AddonServiceProvider only scans `Scopes`,
      * `Query/Scopes` and `Query/Scopes/Filters` at their top level, and these
@@ -71,8 +92,10 @@ class ServiceProvider extends AddonServiceProvider
 
     public function bootAddon(): void
     {
+        // No loadViewsFrom: the Control Panel is Inertia + Vue and the addon
+        // ships no Blade views at all any more. Registering an empty namespace
+        // would only advertise an extension point that does not exist.
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'activity');
 
         $this->registerNavigation()
             ->registerPermissions()

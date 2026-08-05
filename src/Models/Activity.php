@@ -14,10 +14,30 @@ use Illuminate\Database\Eloquent\Model;
  * unless they go through the retention/anonymisation path, which is the only
  * legitimate reason a stored fact may change after the fact.
  *
+ * The column list below is the whole table. It was a partial list before, which
+ * is why half the ledger's own fields were reported as undefined properties and
+ * had to be carried in the PHPStan baseline — a baseline entry per column of the
+ * central table is a type gap, not a known exception.
+ *
  * @property int $id
  * @property int $brand_id
  * @property string $event_id
  * @property string $event_type
+ * @property string|null $actor_type
+ * @property string|null $actor_id
+ * @property string|null $contact_uuid
+ * @property string|null $user_id
+ * @property string|null $anonymous_id
+ * @property string|null $session_id
+ * @property string|null $source
+ * @property string|null $subject_type
+ * @property string|null $subject_id
+ * @property string|null $dedupe_key
+ * @property array<string, mixed>|null $properties
+ * @property array<string, mixed>|null $context
+ * @property bool $anonymized
+ * @property \Illuminate\Support\Carbon|null $occurred_at
+ * @property \Illuminate\Support\Carbon|null $received_at
  */
 class Activity extends Model
 {

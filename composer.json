@@ -58,7 +58,14 @@
             "description": "Immutable, brand-scoped activity ledger.",
             "url": "https://github.com/goldnead/statamic-activity",
             "developer": "Adrian Goldner",
-            "developer-url": "https://gldnr.studio"
+            "developer-url": "https://gldnr.studio",
+            "vite": {
+                "input": [
+                    "resources/js/cp.js",
+                    "resources/css/cp.css"
+                ],
+                "publicDirectory": "resources/dist"
+            }
         },
         "laravel": {
             "providers": [
