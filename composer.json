@@ -29,8 +29,8 @@
         "statamic/cms": "^6.0"
     },
     "require-dev": {
-        "goldnead/statamic-leadhub": "^1.4",
-        "goldnead/statamic-marketing": "^1.4",
+        "goldnead/statamic-leadhub": "^1.4|^2.0",
+        "goldnead/statamic-marketing": "^1.4|^2.0",
         "larastan/larastan": "^3.0",
         "laravel/pint": "^1.18",
         "orchestra/testbench": "^10.0|^11.0",
