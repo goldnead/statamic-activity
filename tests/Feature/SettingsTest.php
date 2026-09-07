@@ -16,6 +16,7 @@ use Goldnead\Activity\Facades\Activity;
 use Goldnead\Activity\Models\Activity as ActivityModel;
 use Goldnead\Activity\Support\Settings;
 use Goldnead\BrandContext\Settings\SettingsRegistry;
+use Statamic\Facades\Permission;
 use Statamic\Facades\User;
 
 beforeEach(function (): void {
@@ -51,6 +52,19 @@ it('meldet sich bei der gemeinsamen Einstellungs-Schicht an', function (): void 
         ->and($registry->provider('activity'))->toBe(Settings::class)
         ->and($registry->configPath('activity'))->toBe('activity')
         ->and($registry->permission('activity'))->toBe('manage activity settings');
+});
+
+it('meldet das Recht an, das den Abschnitt bewacht', function (): void {
+    // Getrennt von der Behauptung darüber, und nicht überflüssig: die dort
+    // geprüfte Zeichenkette kommt aus der Feldliste. Ob Statamic ein Recht
+    // dieses Namens überhaupt kennt, steht auf einem anderen Blatt — und wenn
+    // nicht, verschwindet der Abschnitt für jeden, der kein Superuser ist,
+    // ohne dass irgendwo etwas dazu steht.
+    // `boot()`, weil `Permission::extend()` die Rückrufe nur einreiht;
+    // ausgeführt werden sie erst hier. Ohne den Aufruf ist die Liste leer und
+    // die Behauptung würde für jedes Recht der Welt umfallen, auch für die,
+    // die es gibt.
+    expect(Permission::boot()->all()->keys())->toContain('manage activity settings');
 });
 
 it('bietet keinen Schlüssel an, der beim Booten gelesen wird', function (): void {
