@@ -11,6 +11,8 @@ use Goldnead\Activity\Producers\ProducerRegistry;
 use Goldnead\Activity\Sanitizers\DefaultActivitySanitizer;
 use Goldnead\Activity\Scopes\Filters;
 use Goldnead\Activity\Support\ContextCapture;
+use Goldnead\Activity\Support\Settings;
+use Goldnead\BrandContext\Settings\SettingsRegistry;
 use Statamic\Facades\CP\Nav;
 use Statamic\Facades\Permission;
 use Statamic\Providers\AddonServiceProvider;
@@ -88,6 +90,25 @@ class ServiceProvider extends AddonServiceProvider
         $this->app->alias('activity', ActivityRecorder::class);
 
         $this->app->bind(ActivitySanitizer::class, DefaultActivitySanitizer::class);
+    }
+
+    /**
+     * Die Einstellungs-Seite wird hier angemeldet, nicht in `bootAddon()`.
+     *
+     * Das ist keine Stilfrage. `statamic-brand-context` schreibt die
+     * gespeicherten Abweichungen aus einem `app->booted()`-Rückruf auf die
+     * Konfiguration, absichtlich, damit jedes `boot()` sich vorher anmelden
+     * konnte. `bootAddon()` läuft selbst aus einem `app->booted()`-Rückruf
+     * (Statamics AppServiceProvider), und welcher der beiden zuerst feuert,
+     * hängt an der Ladereihenfolge der Pakete — eine Anmeldung dort erreicht
+     * die Konfiguration auf manchen Installationen und auf anderen nicht,
+     * ohne dass irgendetwas auf dem Bildschirm sagt, auf welchen.
+     */
+    public function boot(): void
+    {
+        parent::boot();
+
+        $this->app->make(SettingsRegistry::class)->register(Settings::class);
     }
 
     public function bootAddon(): void
@@ -184,6 +205,18 @@ class ServiceProvider extends AddonServiceProvider
             Permission::group('activity', __('activity::cp.nav'), function (): void {
                 Permission::register('view activity')
                     ->label(__('activity::cp.permission_view'));
+
+                // Bewacht den Abschnitt dieses Addons auf der gemeinsamen
+                // Einstellungs-Seite. Daneben, nicht darunter: die Zahlen für
+                // Aufbewahrung und Anonymisierung ändert, wer die
+                // Datenpolitik verantwortet, und das ist nicht zwingend, wer
+                // in den Ereignissen liest.
+                //
+                // Anders als `manage activity retention`, das hier einmal
+                // stand und nichts bewachte: dieses Recht bewacht ein
+                // Formular, nicht einen Artisan-Befehl.
+                Permission::register('manage activity settings')
+                    ->label(__('activity::settings.permission_manage_settings'));
             });
         });
 
