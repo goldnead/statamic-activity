@@ -57,6 +57,41 @@ abstract class TestCase extends Orchestra
         app('brand-context')->forget();
         app('identity-context')->forget();
         app('activity')->producers()->forget();
+
+        $this->unpinSettingsLeftOnTheConfigByTheBoot();
+    }
+
+    /**
+     * Nimmt die Abweichungen von der Config zurueck, die der Boot dieses Tests
+     * aus der Datenbank des *vorigen* gelesen hat.
+     *
+     * Die gemeinsame Einstellungs-Schicht schreibt die gespeicherten Werte aus
+     * einem `app->booted()`-Rueckruf auf die Config. Dieser Rueckruf laeuft in
+     * `parent::setUp()`, und zwar **bevor** `RefreshDatabase` die Datenbank fuer
+     * diesen Test zuruecksetzt. Auf SQLite faellt das nie auf: `:memory:` ist mit
+     * jeder Verbindung neu, der Boot findet also nie eine Zeile. Auf MySQL steht
+     * die Tabelle bis zum `migrate:fresh` noch so da, wie der vorige Test sie
+     * verlassen hat — der Boot liest dessen Zeilen und nagelt sie auf die Config,
+     * wo sie auch dann noch stehen, wenn die Tabelle Millisekunden spaeter geleert
+     * wird. Gemessen am 08.09.2026 im MySQL-Bein: `SettingsTest` speichert
+     * `enabled => false`, und der naechste Test schreibt keine Zeile mehr in den
+     * Bestand, ohne dass irgendetwas das mit dem vorigen Test in Verbindung
+     * bringt.
+     *
+     * `app('brand-context')->forget()` allein reicht dagegen nicht: das meldet
+     * einen Markenwechsel, und von „keine Marke" auf „keine Marke" ist keiner —
+     * der Rueckruf steigt sofort wieder aus. Also hier ausdruecklich, nachdem die
+     * Datenbank steht: Zwischenspeicher weg, dann erzwungen neu anwenden. Die
+     * Baseline dafuer hat die Schicht beim Boot festgehalten, bevor sie das erste
+     * Mal ueberschrieben hat, also landet die Config wieder auf den Paketwerten
+     * plus dem, was in der frisch migrierten Tabelle steht — nichts.
+     */
+    protected function unpinSettingsLeftOnTheConfigByTheBoot(): void
+    {
+        $settings = app('brand-context.settings');
+
+        $settings->forget();
+        $settings->apply(force: true);
     }
 
     protected function getPackageProviders($app): array
