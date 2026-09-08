@@ -1,5 +1,55 @@
 # Changelog
 
+## 1.3.0 — 2026-09-07
+
+### Neu: was aufgezeichnet wird, ist im Control Panel einstellbar
+
+Was dieses Addon schreibt und wie lange es das behält, waren bisher Entscheidungen in
+`config/activity.php`. Es sind Entscheidungen des Verantwortlichen, nicht des Entwicklers, und
+er kam ohne Dateizugriff und ohne Deploy nicht an sie heran. Unter **Einstellungen →
+Addon-Einstellungen** steht jetzt ein eigener Abschnitt mit fünf Gruppen:
+
+- **Aufzeichnung:** der Hauptschalter.
+- **Kontext:** je ein Schalter für UTM-Parameter, Referrer, Seiten-URL und Gerätekategorie,
+  dazu einer, der den Kontext ganz weglässt.
+- **Bereinigung:** welche Schlüssel vor dem Schreiben aus der Nutzlast fallen, welche
+  Ereignisarten gar nicht geschrieben werden, und die Obergrenze der Nutzlast in Bytes.
+- **Aufbewahrung:** nach wie vielen Tagen eine Zeile gelöscht und nach wie vielen sie
+  anonymisiert wird. Beide dürfen leer bleiben, denn „alles behalten" ist ein anderer Zustand
+  als eine Zahl.
+- **Control Panel:** die Zeilenzahl je Seite der Liste.
+
+Gespeichert wird nur, was jemand geändert hat. Alles andere folgt weiter `config/activity.php`,
+so dass ein Paket-Update die Vorgaben mitbewegt und eine Installation, die den Bildschirm nie
+öffnet, sich nicht von einer Fassung davor unterscheidet.
+
+Nicht auf der Seite, und die Gruppentexte sagen das: `producers.marketing`,
+`producers.leadhub` und `cp.enabled` werden beim Booten gelesen, `source` ist die Kennung, die
+auf jeder bereits geschriebenen Zeile steht, `queue.*` gehört zum Betrieb der Maschine, und
+`retention.per_event_type` ist eine Abbildung von Ereignisart auf Tage, für die die
+Einstellungs-Schicht keinen Typ hat. Ein Schalter, der erst beim nächsten Deploy wirkt, wäre
+eine Falschaussage auf dem Bildschirm.
+
+**Neues Recht `manage activity settings`.** Es hat zunächst niemand: bis es einer Rolle
+zugewiesen ist, bleibt der Abschnitt unsichtbar, auch für Benutzer, die an diesem Addon sonst
+alles dürfen. Bestehende Rechte sind unverändert.
+
+**Voraussetzung: `goldnead/statamic-brand-context` ab 1.13.** Ältere Fassungen zeigen die Seite
+zwar, wenden ihre Werte aber nicht zuverlässig an. Auf einer Installation mit einer einzigen
+Marke galten die Einstellungen der zuletzt angemeldeten Addons gar nicht: die Seite zeigte nach
+dem Neuladen den gespeicherten Wert, `config()` antwortete für den Rest des Prozesses mit der
+Paketvorgabe, und der Markenwechsel, der es nachgeholt hätte, findet im Einmarken-Betrieb nie
+statt. Dazu löschte bis 1.12 ein zweites Speichern desselben Abschnitts die Überschreibung des
+ersten, ohne Meldung. Wer zwischen dem 06.09. und diesem Update Werte gesetzt hat, sieht nach
+dem Aktualisieren auf der Seite nach, ob sie noch dastehen.
+
+### Behoben: das ausgelieferte CP-Bundle passte nicht mehr zum Kern
+
+Das eingecheckte Bundle stammte vom 04.08.2026 und war gegen einen Statamic-Kern gebaut, der
+`usePage` noch nicht aus dem Inertia-Modul exportierte. Seit `statamic/cms` v6.27.0 tut er das,
+womit die ausgelieferte Datei vom frischen Bau abwich. Eine Composer-Installation läuft ohne
+npm und lädt genau diese Datei, also ist sie neu gebaut.
+
 ## 1.2.2 — 2026-08-09
 
 ### Fixed — the sibling constraint excluded the new majors
