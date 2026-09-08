@@ -2,53 +2,51 @@
 
 ## 1.3.0 — 2026-09-07
 
-### Neu: was aufgezeichnet wird, ist im Control Panel einstellbar
+### New: what gets recorded is configurable in the Control Panel
 
-Was dieses Addon schreibt und wie lange es das behält, waren bisher Entscheidungen in
-`config/activity.php`. Es sind Entscheidungen des Verantwortlichen, nicht des Entwicklers, und
-er kam ohne Dateizugriff und ohne Deploy nicht an sie heran. Unter **Einstellungen →
-Addon-Einstellungen** steht jetzt ein eigener Abschnitt mit fünf Gruppen:
+What this addon writes and how long it keeps it used to be decisions in `config/activity.php`.
+They are the controller's decisions, not the developer's, and without file access and a deploy
+the controller could not reach them. Under **Settings → Addon Settings** there is now a section
+of its own with five groups:
 
-- **Aufzeichnung:** der Hauptschalter.
-- **Kontext:** je ein Schalter für UTM-Parameter, Referrer, Seiten-URL und Gerätekategorie,
-  dazu einer, der den Kontext ganz weglässt.
-- **Bereinigung:** welche Schlüssel vor dem Schreiben aus der Nutzlast fallen, welche
-  Ereignisarten gar nicht geschrieben werden, und die Obergrenze der Nutzlast in Bytes.
-- **Aufbewahrung:** nach wie vielen Tagen eine Zeile gelöscht und nach wie vielen sie
-  anonymisiert wird. Beide dürfen leer bleiben, denn „alles behalten" ist ein anderer Zustand
-  als eine Zahl.
-- **Control Panel:** die Zeilenzahl je Seite der Liste.
+- **Recording:** the main switch.
+- **Request context:** one switch each for UTM parameters, referrer, page URL and device
+  category, plus one that leaves the context out entirely.
+- **Filter before writing:** which keys are dropped from the payload before it is written,
+  which event types are not written at all, and the payload's upper limit in bytes.
+- **Retention:** after how many days a row is deleted and after how many it is anonymised.
+  Both may stay empty, because "keep everything" is a different state from a number.
+- **Control Panel:** the number of rows per page in the listing.
 
-Gespeichert wird nur, was jemand geändert hat. Alles andere folgt weiter `config/activity.php`,
-so dass ein Paket-Update die Vorgaben mitbewegt und eine Installation, die den Bildschirm nie
-öffnet, sich nicht von einer Fassung davor unterscheidet.
+Only what someone has changed is stored. Everything else keeps following `config/activity.php`,
+so a package update still moves the defaults along and an installation that never opens the
+screen behaves no differently from the version before.
 
-Nicht auf der Seite, und die Gruppentexte sagen das: `producers.marketing`,
-`producers.leadhub` und `cp.enabled` werden beim Booten gelesen, `source` ist die Kennung, die
-auf jeder bereits geschriebenen Zeile steht, `queue.*` gehört zum Betrieb der Maschine, und
-`retention.per_event_type` ist eine Abbildung von Ereignisart auf Tage, für die die
-Einstellungs-Schicht keinen Typ hat. Ein Schalter, der erst beim nächsten Deploy wirkt, wäre
-eine Falschaussage auf dem Bildschirm.
+Not on the page, and the group texts say so: `producers.marketing`, `producers.leadhub` and
+`cp.enabled` are read at boot, `source` is the label that sits on every row already written,
+`queue.*` belongs to the operation of the machine, and `retention.per_event_type` is a map from
+event type to days, for which the settings layer has no type. A switch that only takes effect
+at the next deploy would be a false statement on screen.
 
-**Neues Recht `manage activity settings`.** Es hat zunächst niemand: bis es einer Rolle
-zugewiesen ist, bleibt der Abschnitt unsichtbar, auch für Benutzer, die an diesem Addon sonst
-alles dürfen. Bestehende Rechte sind unverändert.
+**New permission `manage activity settings`.** Nobody holds it at first: until it is assigned to
+a role the section stays invisible, including for users who may otherwise do everything with
+this addon. Existing permissions are unchanged.
 
-**Voraussetzung: `goldnead/statamic-brand-context` ab 1.13.** Ältere Fassungen zeigen die Seite
-zwar, wenden ihre Werte aber nicht zuverlässig an. Auf einer Installation mit einer einzigen
-Marke galten die Einstellungen der zuletzt angemeldeten Addons gar nicht: die Seite zeigte nach
-dem Neuladen den gespeicherten Wert, `config()` antwortete für den Rest des Prozesses mit der
-Paketvorgabe, und der Markenwechsel, der es nachgeholt hätte, findet im Einmarken-Betrieb nie
-statt. Dazu löschte bis 1.12 ein zweites Speichern desselben Abschnitts die Überschreibung des
-ersten, ohne Meldung. Wer zwischen dem 06.09. und diesem Update Werte gesetzt hat, sieht nach
-dem Aktualisieren auf der Seite nach, ob sie noch dastehen.
+**Requires `goldnead/statamic-brand-context` 1.13 or later.** Older versions do show the page,
+but do not apply its values reliably. On an installation with a single brand, the settings of
+the addons that registered last did not apply at all: after a reload the page showed the saved
+value, `config()` answered with the package default for the rest of the process, and the brand
+switch that would have caught this up never happens in single-brand operation. On top of that,
+up to 1.12 saving the same section a second time deleted the first save's override, without a
+message. If you set values between 06.09. and this update, check on the page after updating
+whether they are still there.
 
-### Behoben: das ausgelieferte CP-Bundle passte nicht mehr zum Kern
+### Fixed: the shipped CP bundle no longer matched core
 
-Das eingecheckte Bundle stammte vom 04.08.2026 und war gegen einen Statamic-Kern gebaut, der
-`usePage` noch nicht aus dem Inertia-Modul exportierte. Seit `statamic/cms` v6.27.0 tut er das,
-womit die ausgelieferte Datei vom frischen Bau abwich. Eine Composer-Installation läuft ohne
-npm und lädt genau diese Datei, also ist sie neu gebaut.
+The committed bundle was from 04.08.2026 and had been built against a Statamic core that did not
+yet export `usePage` from the Inertia module. Since `statamic/cms` v6.27.0 it does, which made
+the shipped file differ from a fresh build. A Composer installation runs without npm and loads
+exactly this file, so it has been rebuilt.
 
 ## 1.2.2 — 2026-08-09
 
