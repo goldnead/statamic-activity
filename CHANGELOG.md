@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.4.0 — 2026-09-08
+
+### Changed: a Control Panel page whose table is missing shows an empty state instead of HTTP 500
+
+The addon can be installed without its migrations having run — composer pulls the package in, the
+nav entry appears, and `activities` still does not exist. Both the activity listing and an
+activity's detail screen reached for that table while the page was being built and answered
+HTTP 500. They now check before the first query and render a setup screen that names the missing
+table and says to run `php artisan migrate`. The listing fetches its own rows from the same route;
+that request gets an empty result set, so a tab that was already open shows an honest "nothing
+here" rather than a broken table.
+
+The reason does not disappear with the 500: every guarded page writes to the log why it turned
+somebody away. Otherwise the site would look installed and never record a thing.
+
 ## 1.3.0 — 2026-09-07
 
 ### New: what gets recorded is configurable in the Control Panel
