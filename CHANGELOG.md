@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.1 — 2026-09-08
+
+### Fixed: the test bed carried one test's saved settings into the next one on MySQL
+
+Nothing in the shipped addon changed. The suite's own bed did: the shared settings layer writes
+the stored overrides onto the live config from an `app->booted()` callback, and that callback runs
+before `RefreshDatabase` resets the database for the test about to start. On SQLite that is
+invisible, because an in-memory database is new with every connection and the boot never finds a
+row. On MySQL the table still holds what the previous test left there, so the boot read those rows
+and pinned them onto the config, where they stayed after the table was emptied a moment later — a
+test that saves `enabled => false` silenced the recorder in the test after it. The bed now drops
+the cached overrides and re-applies the layer once the database stands.
+
 ## 1.4.0 — 2026-09-08
 
 ### Changed: a Control Panel page whose table is missing shows an empty state instead of HTTP 500
