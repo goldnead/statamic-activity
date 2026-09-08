@@ -7,8 +7,10 @@
 
 import Index from './pages/Index.vue';
 import Show from './pages/Show.vue';
+import SetupRequired from './pages/SetupRequired.vue';
 
 Statamic.booting(() => {
     Statamic.$inertia.register('activity::Index', Index);
     Statamic.$inertia.register('activity::Show', Show);
+    Statamic.$inertia.register('activity::SetupRequired', SetupRequired);
 });

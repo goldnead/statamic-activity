@@ -4,6 +4,7 @@ namespace Goldnead\Activity\Http\Controllers\Cp;
 
 use Goldnead\Activity\Models\Activity;
 use Goldnead\Activity\Scopes\Filters\ActivityFilter;
+use Goldnead\Activity\Support\Setup;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Carbon;
@@ -45,6 +46,17 @@ class ActivityController extends Controller
     {
         Gate::authorize('view activity');
 
+        // One table, because every query on this screen reads `activities` and
+        // nothing else. The guard runs before the JSON branch as well, so both
+        // representations log the reason rather than throwing.
+        if ($setup = Setup::guard(__('activity::cp.title'), 'activities')) {
+            // The listing fetches its own rows from this same route. It expects
+            // the listing contract, not an Inertia page, so a tab that was open
+            // before the tables went missing gets an empty result set — an
+            // honest "nothing here" instead of a broken table.
+            return $request->wantsJson() ? $this->emptyListing() : $setup;
+        }
+
         if ($request->wantsJson()) {
             return $this->listing($request);
         }
@@ -64,6 +76,12 @@ class ActivityController extends Controller
     public function show(int $id)
     {
         Gate::authorize('view activity');
+
+        // A bookmarked detail link hits the same missing table as the listing
+        // does, and would answer the same 500. Same screen, same sentence.
+        if ($setup = Setup::guard(__('activity::cp.detail_fact'), 'activities')) {
+            return $setup;
+        }
 
         // Brand scope still applies: an operator in brand A must not be able to
         // read a brand B row by guessing its id.
@@ -104,6 +122,30 @@ class ActivityController extends Controller
             'subject_id' => $activity->subject_id,
             'properties' => $activity->properties,
             'context' => $activity->context,
+        ];
+    }
+
+    /**
+     * The same contract as `listing()`, answered without touching the database.
+     * Written out rather than paginating an empty collection, because building
+     * a paginator here would mean running the very query that cannot run.
+     *
+     * @return array<string, mixed>
+     */
+    private function emptyListing(): array
+    {
+        return [
+            'data' => [],
+            'meta' => [
+                'columns' => collect($this->columns())->map->toArray()->all(),
+                'activeFilterBadges' => [],
+                'current_page' => 1,
+                'last_page' => 1,
+                'per_page' => $this->perPage(null),
+                'from' => null,
+                'to' => null,
+                'total' => 0,
+            ],
         ];
     }
 

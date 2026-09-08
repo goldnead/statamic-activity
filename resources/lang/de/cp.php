@@ -24,6 +24,9 @@ return [
     'filter_anonymized_only' => 'Nur anonymisierte',
     'filter_anonymized_excluded' => 'Nicht anonymisierte',
 
+    'setup_required_heading' => 'Diese Seite braucht ihre Datenbanktabellen, und die gibt es noch nicht.',
+    'setup_required_description' => 'Führe `php artisan migrate` aus, danach lädt die Seite normal. Der Grund steht auch im Log.',
+
     'empty_heading' => 'Es wurde noch nichts aufgezeichnet',
     'empty_docs_heading' => 'Wie Fakten entstehen',
     'empty_docs_description' => 'Recording-API und Producer-Registry nachlesen.',

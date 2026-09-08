@@ -24,6 +24,9 @@ return [
     'filter_anonymized_only' => 'Anonymised only',
     'filter_anonymized_excluded' => 'Not anonymised',
 
+    'setup_required_heading' => 'This page needs its database tables, and they are not there yet.',
+    'setup_required_description' => 'Run `php artisan migrate` and the page loads as usual. The reason is in the log as well.',
+
     'empty_heading' => 'Nothing has been recorded yet',
     'empty_docs_heading' => 'How facts get recorded',
     'empty_docs_description' => 'Read the recording API and the producer registry.',
