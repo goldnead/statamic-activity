@@ -6,16 +6,6 @@ parameters:
 			count: 1
 			path: src/ActivityRecorder.php
 
-		# Statamic annotates AddonServiceProvider::$vite as list<string>, but
-		# registerVite() reads it by key (input / publicDirectory / hotFile).
-		# The annotation is wrong upstream and a correcting @var here is
-		# rejected as non-covariant, so this cannot be fixed from the addon.
-		-
-			message: '#^Property Goldnead\\Activity\\ServiceProvider\:\:\$vite \(list\<string\>\) does not accept default value of type array\{input\: array\{''resources/js/cp\.js'', ''resources/css/cp\.css''\}, publicDirectory\: ''resources/dist''\}\.$#'
-			identifier: property.defaultValue
-			count: 1
-			path: src/ServiceProvider.php
-
 		-
 			message: '#^Strict comparison using \=\=\= between non\-falsy\-string and false will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse

@@ -18,3 +18,14 @@ parameters:
     excludePaths:
         - src/Producers/LeadHubProducer.php
         - src/Producers/MarketingProducer.php
+
+    ignoreErrors:
+        # Older Statamic annotates AddonServiceProvider::$vite as list<string>,
+        # newer ones with the keyed shape (input / publicDirectory). CI resolves
+        # the newer, the lock file the older; only the older needs the
+        # exception, hence silent when it does not match.
+        -
+            identifier: property.defaultValue
+            message: '#ServiceProvider\:\:\$vite \(list\<string\>\) does not accept default value#'
+            path: src/ServiceProvider.php
+            reportUnmatched: false
