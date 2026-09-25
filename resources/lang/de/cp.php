@@ -4,7 +4,7 @@ return [
     'nav' => 'Aktivität',
     'permission_view' => 'Aktivitäts-Ledger ansehen',
     'title' => 'Aktivitäts-Ledger',
-    'intro' => 'Rohe, unveränderliche Fakten. Bewusst nur lesend — Kennzahlen und Auswertungen liegen woanders.',
+    'intro' => 'Rohe, unveränderliche Fakten, nur zum Lesen. Kennzahlen und Auswertungen liegen woanders.',
 
     'filter_any' => 'Alle',
     'filter_event_type' => 'Event-Typ',
