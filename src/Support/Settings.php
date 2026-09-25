@@ -79,6 +79,16 @@ class Settings implements ProvidesSettings
     }
 
     /**
+     * The sidebar entry and tab, read by brand-context 1.15 and later. Before,
+     * the entry was the addon name "Activity", and it read "Aktivität" only
+     * because other addons translated that name globally.
+     */
+    public static function settingsTitle(): string
+    {
+        return (string) __('activity::cp.nav');
+    }
+
+    /**
      * @return array<int, array{title: string, description: string, fields: array<int, array<string, mixed>>}>
      */
     public static function settingsGroups(): array

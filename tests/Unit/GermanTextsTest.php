@@ -17,3 +17,11 @@ it('writes the German texts without dashes', function (): void {
 
     expect($found)->toBe([]);
 });
+
+// The settings entry read "Aktivität" only because other addons translated
+// the name "Activity" globally. They no longer do; the entry names itself.
+it('names its settings entry in the CP language', function (): void {
+    app()->setLocale('de');
+
+    expect(\Goldnead\Activity\Support\Settings::settingsTitle())->toBe('Aktivität');
+});
