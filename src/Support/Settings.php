@@ -150,6 +150,18 @@ class Settings implements ProvidesSettings
     }
 
     /**
+     * Unter welchem Eintrag der eigenen CP-Navigation der Unterpunkt "Settings"
+     * hängt: [Sektion, Name], exakt wie in Nav::extend. Optional, gelesen von
+     * der Einstellungs-Schicht in statamic-brand-context (ab 1.16).
+     *
+     * @return array{0: string, 1: string}
+     */
+    public static function settingsNavParent(): array
+    {
+        return ['Tools', __('activity::cp.nav')];
+    }
+
+    /**
      * Ein Feld, mit Beschriftung und Hilfetext aus den Sprachdateien.
      *
      * Der Übersetzungsschlüssel ist der Konfigurationspfad mit flachgelegten
