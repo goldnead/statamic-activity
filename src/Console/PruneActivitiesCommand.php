@@ -25,6 +25,27 @@ class PruneActivitiesCommand extends Command
             return self::SUCCESS;
         }
 
+        // A window below one day is not a retention policy: `subDays(0)` is
+        // now, and everything is older than now. Refused whatever the source
+        // (config, env, --days, per-type map), before anything is deleted.
+        $windows = array_merge(['global' => $global], $perType);
+
+        foreach ($windows as $name => $days) {
+            if ($days === null) {
+                continue;
+            }
+
+            if (! is_numeric($days) || (int) $days < 1) {
+                $this->components->error(sprintf(
+                    'Retention window for "%s" is "%s": it must be a whole number of days, at least 1. Nothing was deleted.',
+                    $name,
+                    is_scalar($days) ? (string) $days : gettype($days),
+                ));
+
+                return self::FAILURE;
+            }
+        }
+
         $dryRun = (bool) $this->option('dry-run');
         $total = 0;
 

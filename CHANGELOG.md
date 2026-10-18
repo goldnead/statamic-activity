@@ -1,11 +1,15 @@
 # Changelog
 
-## Unreleased
+## 1.6.0 — 2026-10-18
 
 ### Changed
 
+- **Behaviour change on update: `retention.days` now defaults to 365.** Without `ACTIVITY_RETENTION_DAYS` set, `activity:prune` deletes every entry older than 365 days at its next run (before, an unset value pruned nothing by age). Check with `php artisan activity:prune --dry-run` first. To keep everything, set `'days' => null` in the published `config/activity.php`.
+- **A window of 0 or less is refused.** `activity:prune` exits with an error and deletes nothing when the global window, `--days`, or any per-event-type window is below 1 or not a number, whatever it came from. `subDays(0)` is "now", which would delete the whole store.
+- Known gap, not changed here: `retention.anonymize_after_days` is still stored per brand while `activity:anonymize` works across the whole store.
+
 - Retention: `retention.days` is one value for the whole installation, not per brand. `activity:prune` already deleted across every brand by that single number, while the Settings page stored a separate value per brand that nothing read. The field is removed from the Settings page; the page now says where the value lives (`config/activity.php`). Set it there with `ACTIVITY_RETENTION_DAYS` or by editing the published config.
-- Retention, upgrading: no migration. Rows that an earlier release stored for `retention.days` in `brand_settings` are no longer read and can be deleted by hand. Until the config value is set, nothing is pruned by age.
+- Retention, upgrading: no migration. Rows that an earlier release stored for `retention.days` in `brand_settings` are no longer read and can be deleted by hand. 
 
 ### Fixed
 

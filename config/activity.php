@@ -90,7 +90,9 @@ return [
     |--------------------------------------------------------------------------
     |
     | `days` is one value for the whole installation, not per brand: activity:prune
-    | deletes across every brand by this number. Null keeps everything.
+    | deletes across every brand by this number. Default 365; set
+    | `ACTIVITY_RETENTION_DAYS` to change it. Zero and below are refused by the
+    | command (nothing is deleted). Null keeps everything.
     | `anonymize_after_days` strips the personal fields while keeping the
     | countable fact — usually what you want instead of deletion. Per-event-type
     | overrides win over the global value.
@@ -98,7 +100,7 @@ return [
     */
 
     'retention' => [
-        'days' => env('ACTIVITY_RETENTION_DAYS'),
+        'days' => env('ACTIVITY_RETENTION_DAYS', 365),
         'anonymize_after_days' => env('ACTIVITY_ANONYMIZE_AFTER_DAYS'),
         'per_event_type' => [
             // 'marketing.email_opened' => 90,

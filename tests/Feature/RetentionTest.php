@@ -4,7 +4,47 @@ use Goldnead\Activity\Facades\Activity;
 use Goldnead\Activity\Models\Activity as ActivityModel;
 use Goldnead\IdentityContracts\Identity;
 
-it('does nothing when no retention window is configured', function (): void {
+it('defaults to a 365 day window when nothing is configured', function (): void {
+    expect(config('activity.retention.days'))->toBe(365);
+
+    Activity::record('account.login', ['occurred_at' => now()->subDays(400)]);
+    Activity::record('account.login', ['occurred_at' => now()->subDays(10)]);
+
+    $this->artisan('activity:prune')->assertSuccessful();
+
+    expect(ActivityModel::count())->toBe(1);
+});
+
+it('refuses a window of zero or less and deletes nothing', function (mixed $value): void {
+    Activity::record('account.login', ['occurred_at' => now()->subDays(400)]);
+    Activity::record('account.login', ['occurred_at' => now()->subDays(1)]);
+
+    config()->set('activity.retention.days', $value);
+    $this->artisan('activity:prune')->assertFailed();
+
+    expect(ActivityModel::count())->toBe(2);
+})->with([0, -5, '0', 'abc']);
+
+it('refuses a zero --days override whatever the config says', function (): void {
+    Activity::record('account.login', ['occurred_at' => now()->subDays(400)]);
+
+    $this->artisan('activity:prune', ['--days' => 0])->assertFailed();
+
+    expect(ActivityModel::count())->toBe(1);
+});
+
+it('refuses a per-type window of zero and deletes nothing', function (): void {
+    config()->set('activity.retention.per_event_type', ['marketing.email_opened' => 0]);
+    Activity::record('marketing.email_opened', ['occurred_at' => now()->subDays(1)]);
+    Activity::record('account.login', ['occurred_at' => now()->subDays(400)]);
+
+    $this->artisan('activity:prune')->assertFailed();
+
+    expect(ActivityModel::count())->toBe(2);
+});
+
+it('keeps everything when retention is explicitly set to null', function (): void {
+    config()->set('activity.retention.days', null);
     Activity::record('account.login', ['occurred_at' => now()->subYears(5)]);
 
     $this->artisan('activity:prune')->assertSuccessful();
