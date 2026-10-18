@@ -23,7 +23,7 @@ it('refuses a window of zero or less and deletes nothing', function (mixed $valu
     $this->artisan('activity:prune')->assertFailed();
 
     expect(ActivityModel::count())->toBe(2);
-})->with([0, -5, '0', 'abc']);
+})->with([0, -5, '0', 'abc', '1.5', '']);
 
 it('refuses a zero --days override whatever the config says', function (): void {
     Activity::record('account.login', ['occurred_at' => now()->subDays(400)]);

@@ -35,7 +35,7 @@ class PruneActivitiesCommand extends Command
                 continue;
             }
 
-            if (! is_numeric($days) || (int) $days < 1) {
+            if (filter_var($days, FILTER_VALIDATE_INT) === false || (int) $days < 1) {
                 $this->components->error(sprintf(
                     'Retention window for "%s" is "%s": it must be a whole number of days, at least 1. Nothing was deleted.',
                     $name,
