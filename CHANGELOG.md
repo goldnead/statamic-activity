@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Retention: `retention.days` is one value for the whole installation, not per brand. `activity:prune` already deleted across every brand by that single number, while the Settings page stored a separate value per brand that nothing read. The field is removed from the Settings page; the page now says where the value lives (`config/activity.php`). Set it there with `ACTIVITY_RETENTION_DAYS` or by editing the published config.
+- Retention, upgrading: no migration. Rows that an earlier release stored for `retention.days` in `brand_settings` are no longer read and can be deleted by hand. Until the config value is set, nothing is pruned by age.
+
+### Fixed
+
+- `activity:prune` no longer shortens or lengthens its window depending on which brand the run starts under.
+
 ## 1.5.0 — 2026-10-17
 
 ### Changed

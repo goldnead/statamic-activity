@@ -27,7 +27,7 @@ return [
 
         'retention' => [
             'title' => 'Retention',
-            'description' => 'Both take effect when activity:prune and activity:anonymize run, and both are irreversible then. Check a change with --dry-run first: the command tells you how many rows would be affected without touching one. The values are held per brand, while both commands work across the whole store and read the value of the brand they are started under. Per-event-type windows stay in config/activity.php.',
+            'description' => 'Both take effect when activity:prune and activity:anonymize run, and both are irreversible then. Check a change with --dry-run first: the command tells you how many rows would be affected without touching one. The retention window for activity:prune is one value for the whole installation and lives in config/activity.php, not here. The anonymisation window is held per brand; activity:anonymize works across the whole store and reads the value of the brand it is started under. Per-event-type windows stay in config/activity.php.',
         ],
 
         'cp' => [

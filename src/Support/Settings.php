@@ -44,6 +44,11 @@ use Goldnead\BrandContext\Settings\SettingsRegistry;
  * - `retention.per_event_type`. Eine verschachtelte Abbildung von Ereignisart
  *   auf Tage. Sie bleibt in `config/activity.php`, wo die Zeile daneben
  *   erklärt, dass sie den globalen Wert schlägt.
+ * - `retention.days`. Die Aufbewahrungsfrist gehört der Installation, nicht
+ *   der Marke (Entscheidung 17.10.2026). `activity:prune` löscht über alle
+ *   Marken nach dieser einen Zahl; eine Zahl je Marke würde gespeichert,
+ *   aber nie gelesen. Sie steht in `config/activity.php`, und die Seite sagt
+ *   das im Abschnitt Aufbewahrung.
  */
 class Settings implements ProvidesSettings
 {
@@ -125,6 +130,10 @@ class Settings implements ProvidesSettings
                 'title' => __('activity::settings.groups.retention.title'),
                 'description' => __('activity::settings.groups.retention.description'),
                 'fields' => [
+                    // `retention.days` steht bewusst nicht hier: die Frist
+                    // gehört der Installation und liegt in config/activity.php.
+                    // Die Beschreibung der Gruppe sagt das.
+                    //
                     // `nullable`, weil leer „alles behalten" heißt und das ein
                     // anderer Zustand ist als eine Zahl.
                     //
@@ -135,7 +144,6 @@ class Settings implements ProvidesSettings
                     // Zahl ist eine vertretbare Politik, die niemand von hier
                     // aus besser weiß, also steht der Boden dort, wo die
                     // Bedeutung kippt, und nicht bei einer Wunschzahl.
-                    static::field('retention.days', 'integer', ['min' => 1, 'nullable' => true]),
                     static::field('retention.anonymize_after_days', 'integer', ['min' => 1, 'nullable' => true]),
                 ],
             ],

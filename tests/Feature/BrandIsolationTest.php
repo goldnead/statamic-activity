@@ -82,3 +82,36 @@ it('keeps retention sweeps from crossing brands unintentionally', function (): v
 
     expect(BrandContext::withoutBrandScope(fn () => ActivityModel::count()))->toBe(0);
 });
+
+it('deletes by the config window whichever brand starts the run', function (): void {
+    // Die Aufbewahrungsfrist gehört der Installation (Entscheidung 17.10.2026):
+    // eine Zahl in config/activity.php. Eine Marke, die eine eigene Zahl
+    // gespeichert hat, darf den Lauf nicht verkürzen oder verlängern.
+    config()->set('activity.retention.days', 365);
+
+    // Die Zahlen so, wie die alte Einstellungsseite sie geschrieben hat.
+    BrandContext::runFor($this->brandA, fn () => app('brand-context.settings')
+        ->for('activity')->save(['retention.days' => 30]));
+    BrandContext::runFor($this->brandB, fn () => app('brand-context.settings')
+        ->for('activity')->save(['retention.days' => 90]));
+
+    BrandContext::runFor($this->brandA, fn () => Activity::record('marketing.email_opened', [
+        'occurred_at' => now()->subDays(100),
+    ]));
+    BrandContext::runFor($this->brandB, fn () => Activity::record('marketing.email_opened', [
+        'occurred_at' => now()->subDays(100),
+    ]));
+    BrandContext::runFor($this->brandA, fn () => Activity::record('marketing.email_opened', [
+        'occurred_at' => now()->subDays(400),
+    ]));
+
+    // Der Lauf startet unter Marke A, danach unter Marke B. Beide Male gilt 365.
+    BrandContext::setCurrent($this->brandA);
+    $this->artisan('activity:prune')->assertSuccessful();
+
+    BrandContext::setCurrent($this->brandB);
+    $this->artisan('activity:prune')->assertSuccessful();
+
+    expect(BrandContext::withoutBrandScope(fn () => ActivityModel::count()))->toBe(2)
+        ->and(config('activity.retention.days'))->toBe(365);
+});

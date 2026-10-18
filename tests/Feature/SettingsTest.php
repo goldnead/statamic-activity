@@ -104,37 +104,11 @@ it('schaltet die Aufzeichnung ab, und es entsteht keine Zeile mehr', function ()
     expect(ActivityModel::withoutGlobalScopes()->count())->toBe(1);
 });
 
-it('verkürzt die Aufbewahrung, und der nächste Lauf sieht die neue Zahl', function (): void {
-    // Der Weg, an dem eine Änderung wehtut: die Zahl wird nicht in einem
-    // Controller gelesen, sondern in einem Artisan-Befehl, der löscht.
-    Activity::record('test.alt', ['anonymous_id' => 'a1']);
+it('bietet die Aufbewahrungsfrist nicht als Feld an, sie steht in der Config', function (): void {
+    // Entscheidung 17.10.2026: die Frist gehört der Installation. Ein Feld auf
+    // der Seite würde eine Zahl anbieten, die der Lauf nicht liest.
+    $keys = array_keys(app(SettingsRegistry::class)->fields('activity'));
 
-    // Zurückdatiert statt von Hand eingefügt: die Zeile soll durch denselben
-    // Schreibweg entstanden sein wie im Betrieb, sonst prüft der Lauf gleich
-    // eine Zeile, die es so nie gibt.
-    ActivityModel::mutable(fn () => ActivityModel::withoutGlobalScopes()
-        ->update(['occurred_at' => now()->subDays(200)]));
-
-    // Vorgabe ist leer, also „alles behalten": ein Lauf jetzt löscht nichts.
-    $this->artisan('activity:prune')->assertExitCode(0);
-    expect(ActivityModel::withoutGlobalScopes()->count())->toBe(1);
-
-    patchActivitySettings($this, ['retention.days' => 90])->assertRedirect();
-
-    $this->artisan('activity:prune')->assertExitCode(0);
-    expect(ActivityModel::withoutGlobalScopes()->count())->toBe(0);
-});
-
-it('nimmt keine Aufbewahrung von null Tagen an', function (): void {
-    // 0 ist der eine Wert, der keine Aufbewahrungsregel ist, sondern
-    // „lösche den ganzen Bestand": `subDays(0)` ist jetzt, und alles ist
-    // älter als jetzt. Leer bleibt erlaubt und heißt „alles behalten".
-    $abgelehnt = patchActivitySettings($this, ['retention.days' => 0])->assertStatus(422);
-
-    // Der Schlüssel trägt einen echten Punkt; `assertJsonValidationErrors`
-    // und `assertJsonPath` lesen ihn beide als Pfadtrenner und suchen an einer
-    // Stelle, die es nicht gibt.
-    expect($abgelehnt->json('errors'))->toHaveKey('settings.retention.days');
-
-    patchActivitySettings($this, ['retention.days' => null])->assertRedirect();
+    expect($keys)->not->toContain('retention.days')
+        ->and($keys)->toContain('retention.anonymize_after_days');
 });

@@ -27,7 +27,7 @@ return [
 
         'retention' => [
             'title' => 'Aufbewahrung',
-            'description' => 'Beides greift erst, wenn activity:prune beziehungsweise activity:anonymize läuft, und beides ist dann unumkehrbar. Prüfen Sie eine Änderung vorher mit dem Zusatz --dry-run: der Befehl sagt Ihnen, wie viele Zeilen betroffen wären, ohne eine anzufassen. Die Werte gelten je Marke, die beiden Befehle laufen dagegen über den gesamten Bestand und lesen den Wert der Marke, unter der sie gestartet werden. Aufbewahrungsfristen je Ereignisart bleiben in config/activity.php.',
+            'description' => 'Beides greift erst, wenn activity:prune beziehungsweise activity:anonymize läuft, und beides ist dann unumkehrbar. Prüfen Sie eine Änderung vorher mit dem Zusatz --dry-run: der Befehl sagt Ihnen, wie viele Zeilen betroffen wären, ohne eine anzufassen. Die Aufbewahrungsfrist für activity:prune gilt für die ganze Installation und steht in config/activity.php, nicht hier. Die Anonymisierungsfrist gilt je Marke; activity:anonymize läuft über den gesamten Bestand und liest den Wert der Marke, unter der er gestartet wird. Aufbewahrungsfristen je Ereignisart bleiben in config/activity.php.',
         ],
 
         'cp' => [

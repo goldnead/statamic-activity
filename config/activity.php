@@ -89,9 +89,11 @@ return [
     | Retention
     |--------------------------------------------------------------------------
     |
-    | `days` null keeps everything. `anonymize_after_days` strips the personal
-    | fields while keeping the countable fact — usually what you want instead of
-    | deletion. Per-event-type overrides win over the global value.
+    | `days` is one value for the whole installation, not per brand: activity:prune
+    | deletes across every brand by this number. Null keeps everything.
+    | `anonymize_after_days` strips the personal fields while keeping the
+    | countable fact — usually what you want instead of deletion. Per-event-type
+    | overrides win over the global value.
     |
     */
 
