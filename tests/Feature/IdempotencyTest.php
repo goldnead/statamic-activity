@@ -64,9 +64,9 @@ it('scopes dedupe keys per brand so two brands may record the same fact', functi
 });
 
 it('never lets a ledger failure escape into the caller', function (): void {
-    // Drop the table under the recorder: a broken ledger must not roll back the
-    // purchase that produced the event.
-    Schema::drop('activities');
-
-    expect(Activity::record('commerce.purchase_completed'))->toBeNull();
+    // Run the recorder against a database without the ledger table: a broken
+    // ledger must not roll back the purchase that produced the event.
+    $this->withUnmigratedDatabase(function (): void {
+        expect(Activity::record('commerce.purchase_completed'))->toBeNull();
+    });
 });

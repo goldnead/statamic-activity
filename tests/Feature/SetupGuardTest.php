@@ -2,7 +2,6 @@
 
 use Goldnead\Activity\Facades\Activity;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Inertia\Testing\AssertableInertia;
 use Statamic\Facades\User;
 
@@ -20,28 +19,23 @@ beforeEach(function (): void {
     $this->actingAs($user);
 });
 
-function dropTheLedgerTable(): void
-{
-    Schema::dropIfExists('activities');
-}
-
 it('answers 200 on the listing when the table is missing', function (): void {
-    dropTheLedgerTable();
-
-    $this->get('/cp/activity')->assertOk();
+    $this->withUnmigratedDatabase(function (): void {
+        $this->get('/cp/activity')->assertOk();
+    });
 });
 
 it('renders the setup screen and names the missing table', function (): void {
-    dropTheLedgerTable();
-
-    $this->get('/cp/activity')
-        ->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page
-            ->component('activity::SetupRequired')
-            ->where('tables', ['activities'])
-            ->whereNot('heading', '')
-            ->whereNot('description', '')
-        );
+    $this->withUnmigratedDatabase(function (): void {
+        $this->get('/cp/activity')
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('activity::SetupRequired')
+                ->where('tables', ['activities'])
+                ->whereNot('heading', '')
+                ->whereNot('description', '')
+            );
+    });
 });
 
 /**
@@ -50,11 +44,11 @@ it('renders the setup screen and names the missing table', function (): void {
  * site looks installed while it records nothing at all.
  */
 it('writes the reason to the log', function (): void {
-    dropTheLedgerTable();
-
     Log::spy();
 
-    $this->get('/cp/activity')->assertOk();
+    $this->withUnmigratedDatabase(function (): void {
+        $this->get('/cp/activity')->assertOk();
+    });
 
     Log::shouldHaveReceived('error')
         ->withArgs(fn (string $message) => str_contains($message, 'statamic-activity')
@@ -70,25 +64,25 @@ it('writes the reason to the log', function (): void {
  * log, which is why the guard runs before this branch rather than after it.
  */
 it('answers the listing contract with an empty result set when the table is missing', function (): void {
-    dropTheLedgerTable();
-
     Log::spy();
 
-    $response = $this->getJson('/cp/activity')->assertOk();
+    $this->withUnmigratedDatabase(function (): void {
+        $response = $this->getJson('/cp/activity')->assertOk();
 
-    expect($response->json('data'))->toBe([])
-        ->and($response->json('meta.total'))->toBe(0)
-        ->and($response->json('meta.columns'))->not->toBeEmpty();
+        expect($response->json('data'))->toBe([])
+            ->and($response->json('meta.total'))->toBe(0)
+            ->and($response->json('meta.columns'))->not->toBeEmpty();
+    });
 
     Log::shouldHaveReceived('error')->once();
 });
 
 it('answers 200 on the detail screen when the table is missing', function (): void {
-    dropTheLedgerTable();
-
-    $this->get('/cp/activity/1')
-        ->assertOk()
-        ->assertInertia(fn (AssertableInertia $page) => $page->component('activity::SetupRequired'));
+    $this->withUnmigratedDatabase(function (): void {
+        $this->get('/cp/activity/1')
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page->component('activity::SetupRequired'));
+    });
 });
 
 it('still renders the listing on a migrated install', function (): void {
