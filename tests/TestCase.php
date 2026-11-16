@@ -5,6 +5,7 @@ namespace Goldnead\Activity\Tests;
 use Goldnead\Activity\ServiceProvider;
 use Goldnead\BrandContext\Models\Brand;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Statamic\Http\Middleware\CP\HandleInertiaRequests;
@@ -277,5 +278,35 @@ abstract class TestCase extends Orchestra
     protected function makeBrand(string $handle): Brand
     {
         return Brand::create(['handle' => $handle, 'name' => ucfirst($handle)]);
+    }
+
+    /**
+     * Runs $work against a second, empty in-memory SQLite connection that was
+     * never migrated. Use it for anything that must observe a missing table:
+     * dropping a table on the real connection is DDL, which MySQL commits
+     * implicitly, so RefreshDatabase's rollback cannot undo it and later tests
+     * (or the teardown) fail with "Base table or view not found: 1146".
+     */
+    protected function withUnmigratedDatabase(callable $work): mixed
+    {
+        config()->set('database.connections.unmigrated', [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+            'prefix' => '',
+            'foreign_key_constraints' => false,
+        ]);
+
+        $previous = (string) config('database.default');
+
+        config()->set('database.default', 'unmigrated');
+        DB::setDefaultConnection('unmigrated');
+
+        try {
+            return $work();
+        } finally {
+            config()->set('database.default', $previous);
+            DB::setDefaultConnection($previous);
+            DB::purge('unmigrated');
+        }
     }
 }
