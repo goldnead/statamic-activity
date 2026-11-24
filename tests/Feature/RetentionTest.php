@@ -149,7 +149,29 @@ it('still ages out by the configured window when nothing is targeted', function 
 
     $this->artisan('activity:anonymize')->assertSuccessful();
 
-    expect(ActivityModel::where('anonymized', true)->count())->toBe(1);
+    expect(ActivityModel::where('anonymized', true)->count())->toBe(1)
+        ->and(ActivityModel::where('user_id', 23)->count())->toBe(1)
+        ->and(ActivityModel::where('user_id', 22)->count())->toBe(0);
+});
+
+it('refuses a configured window that is not a whole number of at least one and rewrites nothing', function (mixed $value): void {
+    config()->set('activity.retention.anonymize_after_days', $value);
+
+    Activity::record('account.login', ['actor' => Identity::user(25), 'occurred_at' => now()->subDay()]);
+
+    $this->artisan('activity:anonymize')->assertFailed();
+
+    expect(ActivityModel::where('anonymized', true)->count())->toBe(0);
+})->with([0, '0', 'abc', -3, false]);
+
+it('treats an empty configured window as no window', function (): void {
+    config()->set('activity.retention.anonymize_after_days', '');
+
+    Activity::record('account.login', ['actor' => Identity::user(26), 'occurred_at' => now()->subDays(900)]);
+
+    $this->artisan('activity:anonymize')->assertFailed();
+
+    expect(ActivityModel::where('anonymized', true)->count())->toBe(0);
 });
 
 it('refuses a --days that is not a whole number of at least one and rewrites nothing', function (string $value): void {

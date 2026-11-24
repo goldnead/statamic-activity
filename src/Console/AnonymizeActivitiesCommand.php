@@ -49,15 +49,22 @@ class AnonymizeActivitiesCommand extends Command
         // not narrow a request aimed at one person, or an erasure silently
         // skips every recent row of that person while reporting success.
         $days = $this->option('days');
-
-        if ($days !== null && (! preg_match('/^\d+$/', (string) $days) || (int) $days < 1)) {
-            $this->components->error('--days must be a whole number of at least 1.');
-
-            return self::FAILURE;
-        }
+        $source = '--days';
 
         if ($days === null && ! $targeted) {
             $days = config('activity.retention.anonymize_after_days');
+            $source = 'activity.retention.anonymize_after_days';
+
+            // `ACTIVITY_ANONYMIZE_AFTER_DAYS=` in an .env file arrives as ''.
+            if ($days === '') {
+                $days = null;
+            }
+        }
+
+        if ($days !== null && (! ctype_digit((string) $days) || (int) $days < 1)) {
+            $this->components->error($source.' must be a whole number of at least 1.');
+
+            return self::FAILURE;
         }
 
         if ($days !== null) {
@@ -89,16 +96,20 @@ class AnonymizeActivitiesCommand extends Command
             return self::SUCCESS;
         }
 
-        Activity::mutable(fn () => $this->strip($query));
+        $done = Activity::mutable(fn () => $this->strip($query));
 
-        $this->components->info('Anonymised '.$count.' activities.');
+        if ($done !== $count) {
+            $this->components->warn('Counted '.$count.' activities but rewrote '.$done.'.');
+        }
+
+        $this->components->info('Anonymised '.$done.' activities.');
 
         return self::SUCCESS;
     }
 
-    protected function strip(Builder $query): void
+    protected function strip(Builder $query): int
     {
-        $query->update([
+        return $query->update([
             'contact_uuid' => null,
             'user_id' => null,
             'anonymous_id' => null,
