@@ -102,6 +102,28 @@ it('writes the queued payload unchanged when the job runs', function (): void {
         ->and(ActivityModel::first()->user_id)->toBe('88');
 });
 
+it('lets the queued job fail when the write fails, so the queue retries it', function (): void {
+    // write() swallows a QueryException on purpose when it runs inline: the
+    // ledger must not roll back the purchase that produced the event. In the
+    // job nothing is rolled back, and swallowing it ended the job green after
+    // an outage, so neither the retries nor failed_jobs ever saw the event.
+    $data = Activity::hydrate(\Goldnead\Activity\Support\ActivityData::make('account.login', [
+        'actor' => Identity::user(89),
+        'dedupe_key' => 'login:89',
+    ]));
+
+    \Illuminate\Support\Facades\Schema::drop('activities');
+
+    expect(fn () => (new RecordActivityJob($data->toArray()))->handle())
+        ->toThrow(\Illuminate\Database\QueryException::class);
+});
+
+it('keeps swallowing a failed write when it runs inline', function (): void {
+    \Illuminate\Support\Facades\Schema::drop('activities');
+
+    expect(Activity::record('account.login', ['actor' => Identity::user(90)]))->toBeNull();
+});
+
 it('keys the queued job on the event id so retries collapse', function (): void {
     $job = new RecordActivityJob(['event_id' => 'evt-1', 'event_type' => 'account.login']);
 

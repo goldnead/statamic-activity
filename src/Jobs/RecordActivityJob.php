@@ -45,6 +45,6 @@ class RecordActivityJob implements ShouldBeUnique, ShouldQueue
     {
         // Already hydrated at dispatch time — the request context and actor are
         // long gone by now, so re-hydrating here would silently rewrite them.
-        app('activity')->write(ActivityData::fromArray($this->payload), hydrate: false);
+        app('activity')->write(ActivityData::fromArray($this->payload), hydrate: false, throwOnFailure: true);
     }
 }

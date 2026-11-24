@@ -64,8 +64,13 @@ class ActivityRecorder
             ->onQueue(config('activity.queue.queue'));
     }
 
-    /** Write a pre-built payload. Used by the queued job and by producers. */
-    public function write(ActivityData $data, bool $hydrate = true): ?Activity
+    /**
+     * Write a pre-built payload. Used by the queued job and by producers.
+     *
+     * A failed insert is reported and answered with null, unless
+     * $throwOnFailure is set (the queued job).
+     */
+    public function write(ActivityData $data, bool $hydrate = true, bool $throwOnFailure = false): ?Activity
     {
         if (! $this->enabled()) {
             return null;
@@ -91,6 +96,12 @@ class ActivityRecorder
         } catch (QueryException $e) {
             // Recording is observation, not the business transaction. A ledger
             // problem must not roll back the purchase that produced the event.
+            // The queued job has no transaction to protect and asks for the
+            // exception, so the queue retries and failed_jobs keeps the event.
+            if ($throwOnFailure) {
+                throw $e;
+            }
+
             report($e);
 
             return null;
