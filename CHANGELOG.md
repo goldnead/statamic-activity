@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.7.0 — 2026-11-25
+
+### Changed
+
+- **Behaviour change: a failed insert in `RecordActivityJob` now fails the job.** It used to count as done and the entry was lost without a trace. The job is retried and lands in `failed_jobs` after the last attempt. An install with a flaky database connection will now see failed jobs where it saw nothing before.
+- `ActivityRecorder` recognises a unique-key violation by SQLSTATE (`23000`, `23505`) instead of by the error text, so it works on SQL Server and with localised messages. Other integrity errors (foreign key, NOT NULL) are thrown instead of being taken for a duplicate.
+
+### Fixed
+
+- `activity:anonymize --contact`, `--user` and `--anonymous-id` no longer narrow the run to rows older than `retention.anonymize_after_days`. A targeted erasure now covers every row of the person; before, fresh rows stayed identifiable while the command reported success. The configured window is only the default of the plain age run.
+- `activity:anonymize --days` must be a whole number of at least 1 (and the configured window is validated the same way); otherwise the command exits with an error and writes nothing. Before, `0` or a non-number meant a window of zero days, which anonymised every row of every brand. The command also reports the rows it actually rewrote.
+- Silent failures now leave a trace: the sanitizer logs a warning when a payload cannot be encoded or is truncated for size (error text and size, no content), and the recorder logs when a unique violation has no visible duplicate (with `event_id` and `dedupe_key`).
+
+### Upgrading
+
+- No migration, no new config key. A cron job that calls `activity:anonymize --contact=…` with `retention.anonymize_after_days` set now anonymises all rows of that person. A call with an invalid `--days` now aborts.
+
 ## 1.6.0 — 2026-10-18
 
 ### Changed
