@@ -4,6 +4,7 @@ namespace Goldnead\Activity\Sanitizers;
 
 use Goldnead\Activity\Contracts\ActivitySanitizer;
 use Goldnead\Activity\Support\ActivityData;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Redacts secret-shaped keys and caps payload size. Deliberately conservative:
@@ -75,9 +76,24 @@ class DefaultActivitySanitizer implements ActivitySanitizer
 
         $encoded = json_encode($payload);
 
-        if ($encoded === false || strlen($encoded) <= $max) {
+        if ($encoded === false) {
+            // Passed through unchanged, as before. Only the failure is logged, never the content.
+            Log::warning('activity sanitizer: payload is not JSON-encodable, passed through unchanged', [
+                'error' => json_last_error_msg(),
+                'entries' => count($payload),
+            ]);
+
             return $payload;
         }
+
+        if (strlen($encoded) <= $max) {
+            return $payload;
+        }
+
+        Log::warning('activity sanitizer: payload exceeds max_payload_bytes, replaced by marker', [
+            'bytes' => strlen($encoded),
+            'max_bytes' => $max,
+        ]);
 
         return [
             '_truncated' => true,

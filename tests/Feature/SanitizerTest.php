@@ -4,6 +4,7 @@ use Goldnead\Activity\Contracts\ActivitySanitizer;
 use Goldnead\Activity\Facades\Activity;
 use Goldnead\Activity\Models\Activity as ActivityModel;
 use Goldnead\Activity\Support\ActivityData;
+use Illuminate\Support\Facades\Log;
 
 it('redacts secret-shaped keys at any depth', function (): void {
     $activity = Activity::record('integration.callback', [
@@ -49,4 +50,27 @@ it('can be replaced wholesale by the application', function (): void {
 
     expect(Activity::record('account.login', ['properties' => ['original' => true]])->properties)
         ->toBe(['rewritten' => true]);
+});
+
+it('logs a warning when a payload cannot be encoded and passes it through unchanged', function (): void {
+    Log::spy();
+
+    $result = app(ActivitySanitizer::class)->sanitize(
+        ActivityData::make('integration.callback', ['properties' => ['raw' => "\xB1\x31"]])
+    );
+
+    expect($result->properties)->toBe(['raw' => "\xB1\x31"]);
+    Log::shouldHaveReceived('warning')->once();
+});
+
+it('logs a warning when a payload is replaced by the size marker', function (): void {
+    config()->set('activity.sanitizer.max_payload_bytes', 100);
+    Log::spy();
+
+    $result = app(ActivitySanitizer::class)->sanitize(
+        ActivityData::make('integration.callback', ['properties' => ['blob' => str_repeat('x', 500)]])
+    );
+
+    expect($result->properties['_truncated'])->toBeTrue();
+    Log::shouldHaveReceived('warning')->once();
 });

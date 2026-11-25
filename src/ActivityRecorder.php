@@ -15,6 +15,7 @@ use Goldnead\IdentityContracts\Facades\IdentityContext;
 use Goldnead\IdentityContracts\Identity;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Log;
 
 /**
  * The single write path into the ledger.
@@ -157,13 +158,15 @@ class ActivityRecorder
             /** @var Activity $activity */
             $activity = Activity::create($attributes);
         } catch (UniqueConstraintViolationException) {
-            return $this->findDuplicate($attributes);
+            return $this->duplicateAfterViolation($attributes);
         } catch (QueryException $e) {
             if (! $this->isUniqueViolation($e)) {
                 throw $e;
             }
 
-            return $this->findDuplicate($attributes);
+            // SQLSTATE 23000 also covers foreign key and NOT NULL failures. Without a
+            // visible duplicate it was not a race on the unique index: rethrow.
+            return $this->findDuplicate($attributes) ?? throw $e;
         }
 
         // Only a genuinely new row is an event. Both duplicate paths above
@@ -190,13 +193,31 @@ class ActivityRecorder
             ->first();
     }
 
+    /**
+     * Decided by SQLSTATE, not by the driver's message text. 23505 is PostgreSQL's
+     * unique_violation; 23000 is the generic integrity class that MySQL and SQL
+     * Server use for duplicates (and SQLite for every constraint).
+     */
     protected function isUniqueViolation(QueryException $e): bool
     {
-        $message = strtolower($e->getMessage());
+        return in_array((string) $e->getCode(), ['23000', '23505'], true);
+    }
 
-        return str_contains($message, 'unique constraint')
-            || str_contains($message, 'duplicate entry')
-            || str_contains($message, 'unique violation');
+    /**
+     * The unique index rejected the row, but the competing row is not visible to
+     * the lookup. Nothing is recorded, so the loss is logged.
+     */
+    protected function duplicateAfterViolation(array $attributes): ?Activity
+    {
+        $existing = $this->findDuplicate($attributes);
+
+        if ($existing === null) {
+            Log::warning('activity recorder: unique violation without a visible duplicate, activity not recorded', [
+                'event_type' => $attributes['event_type'] ?? null,
+            ]);
+        }
+
+        return $existing;
     }
 
     public function enabled(): bool
