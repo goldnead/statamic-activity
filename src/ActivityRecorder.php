@@ -214,6 +214,8 @@ class ActivityRecorder
         if ($existing === null) {
             Log::warning('activity recorder: unique violation without a visible duplicate, activity not recorded', [
                 'event_type' => $attributes['event_type'] ?? null,
+                'event_id' => $attributes['event_id'] ?? null,
+                'dedupe_key' => $attributes['dedupe_key'] ?? null,
             ]);
         }
 
