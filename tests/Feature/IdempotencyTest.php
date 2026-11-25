@@ -1,7 +1,12 @@
 <?php
 
+use Goldnead\Activity\ActivityRecorder;
 use Goldnead\Activity\Facades\Activity;
 use Goldnead\Activity\Models\Activity as ActivityModel;
+use Goldnead\Activity\Support\ActivityData;
+use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Log;
 
 it('records the same dedupe key only once and returns the original', function (): void {
     $first = Activity::record('commerce.purchase_completed', [
@@ -70,3 +75,82 @@ it('never lets a ledger failure escape into the caller', function (): void {
         expect(Activity::record('commerce.purchase_completed'))->toBeNull();
     });
 });
+
+it('logs when a unique violation leaves nothing to return', function (): void {
+    Log::spy();
+
+    // A row that the duplicate lookup cannot see, rejected by the unique index.
+    $armed = true;
+    ActivityModel::creating(function () use (&$armed): void {
+        if (! $armed) {
+            return;
+        }
+
+        $armed = false;
+
+        throw new UniqueConstraintViolationException('testing', 'insert', [], new Exception('UNIQUE constraint failed'));
+    });
+
+    expect(Activity::record('commerce.purchase_completed', ['dedupe_key' => 'lost:1']))->toBeNull();
+
+    Log::shouldHaveReceived('warning')->once();
+});
+
+it('treats a unique violation as a duplicate by SQLSTATE, not by message text', function (string $sqlstate, string $message): void {
+    // The competing row is written between the duplicate check and the insert.
+    $first = null;
+    $armed = true;
+    ActivityModel::creating(function () use (&$armed, &$first, $sqlstate, $message): void {
+        if (! $armed) {
+            return;
+        }
+
+        $armed = false;
+        $first = Activity::record('commerce.purchase_completed', ['dedupe_key' => 'sqlstate:1']);
+
+        throw new QueryException('testing', 'insert', [], activityPdoError($message, $sqlstate));
+    });
+
+    $second = Activity::record('commerce.purchase_completed', ['dedupe_key' => 'sqlstate:1']);
+
+    expect(ActivityModel::count())->toBe(1)
+        ->and($second->id)->toBe($first->id);
+})->with([
+    'SQL Server, message without the usual keywords' => ['23000', "Violation of UNIQUE KEY constraint 'act_brand_dedupe_unique'. Cannot insert duplicate key"],
+    'PostgreSQL' => ['23505', 'duplicate key value violates unique constraint "act_brand_dedupe_unique"'],
+]);
+
+it('still rethrows a non-unique integrity error on the queued path', function (): void {
+    // SQLSTATE 23000 also covers foreign key failures. Without a competing row
+    // it is not a duplicate and must reach the queue, not be swallowed.
+    $armed = true;
+    ActivityModel::creating(function () use (&$armed): void {
+        if (! $armed) {
+            return;
+        }
+
+        $armed = false;
+
+        throw new QueryException('testing', 'insert', [], activityPdoError('Cannot add or update a child row: a foreign key constraint fails', '23000'));
+    });
+
+    $write = fn () => app(ActivityRecorder::class)->write(
+        ActivityData::make('commerce.purchase_completed', ['dedupe_key' => 'fk:1']),
+        true,
+        true,
+    );
+
+    expect($write)->toThrow(QueryException::class);
+});
+
+function activityPdoError(string $message, string $sqlstate): PDOException
+{
+    return new class($message, $sqlstate) extends PDOException
+    {
+        public function __construct(string $message, string $sqlstate)
+        {
+            parent::__construct($message);
+            $this->code = $sqlstate;
+        }
+    };
+}
